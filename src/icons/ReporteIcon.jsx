@@ -1,0 +1,12 @@
+import React from 'react';
+export default function ReporteIcon({ size=24, color='currentColor', ...props }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" {...props}>
+      <rect x="3" y="4" width="14" height="16" rx="2" stroke={color} strokeWidth="1.6"/>
+      <path d="M7 8h6" stroke={color} strokeWidth="1.6"/>
+      <path d="M7 12h6" stroke={color} strokeWidth="1.6"/>
+      <path d="M7 16h6" stroke={color} strokeWidth="1.6"/>
+      <path d="M21 8v8" stroke={color} strokeWidth="1.6"/>
+    </svg>
+  );
+}
