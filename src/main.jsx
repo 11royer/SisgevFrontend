@@ -2,31 +2,32 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import AppRoutes from './App';
-import { AuthProvider, AuthContext } from './auth/AuthContext';
-import { getTheme } from './theme/theme';
+import { CssBaseline } from '@mui/material';
 
-function ThemeWrapper({ children }) {
-  const { themeMode } = React.useContext(AuthContext);
-  const theme = getTheme(themeMode || 'light');
+// Importamos el Contexto de Autenticación, sigue siendo necesario
+import { AuthProvider } from './auth/AuthContext'; 
 
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      {children}
-    </ThemeProvider>
-  );
-}
+// Importamos el nuevo Contexto del Tema
+import { ThemeContextProvider } from './theme/ThemeContext'; 
+
+// Importamos el componente principal de rutas
+import AppRoutes from './App'; 
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <AuthProvider>
-      <ThemeWrapper>
+    {/* 1. Proveedor del Tema: Maneja el modo oscuro/claro */}
+    <ThemeContextProvider> 
+      <CssBaseline /> {/* Aplica la normalización de estilos de MUI */}
+      
+      {/* 2. Proveedor de Autenticación: Maneja el estado del usuario */}
+      <AuthProvider> 
+        
+        {/* 3. Enrutador: Permite la navegación */}
         <BrowserRouter>
           <AppRoutes />
         </BrowserRouter>
-      </ThemeWrapper>
-    </AuthProvider>
+        
+      </AuthProvider>
+    </ThemeContextProvider>
   </React.StrictMode>
 );
