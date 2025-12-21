@@ -12,7 +12,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu'; // Icono de Menú
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
-import useAuth from '../auth/useAuth';
+import useAuth from '../auth/UseAuth';
 import { useNavigate } from 'react-router-dom';
 import { useThemeContext } from '../theme/ThemeContext'; 
 

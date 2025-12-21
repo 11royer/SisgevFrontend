@@ -3,7 +3,7 @@ import React from 'react';
 import { Box, Paper, Typography, useTheme } from '@mui/material';
 import LoginForm from '../components/LoginForm';
 import ShieldIcon from '../icons/ShieldIcon';
-import useAuth from '../auth/useAuth';
+import useAuth from '../auth/UseAuth';
 import { useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
