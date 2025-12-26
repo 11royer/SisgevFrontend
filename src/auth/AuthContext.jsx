@@ -1,58 +1,66 @@
-// src/auth/AuthContext.jsx
-import React, { createContext, useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api/axios';
-
-export const AuthContext = createContext();
+import { AuthContext } from './AuthContextRef';
 
 export const AuthProvider = ({ children }) => {
+  // Estados para almacenar el token, el usuario y si el sistema está cargando
   const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(Boolean(token));
-  const [themeMode, setThemeMode] = useState(localStorage.getItem('themeMode') || 'light');
+  const [loading, setLoading] = useState(!!token); // Si hay token, empezamos cargando
 
-  useEffect(() => {
-    if (token) {
+  // Función para obtener los datos del usuario desde Laravel
+  const cargarUsuario = useCallback(async () => {
+    // Si no hay token, no tiene sentido preguntar al servidor
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    try {
       setLoading(true);
-      api.get('/me')
-        .then(res => {
-          setUser(res.data.user || res.data.usuario || res.data);
-        })
-        .catch(() => {
-          localStorage.removeItem('token');
-          setToken(null);
-          setUser(null);
-        })
-        .finally(() => setLoading(false));
+      // Petición a la ruta de perfil (asegúrate que en Laravel sea /api/me)
+      const res = await api.get('/me');
+      setUser(res.data);
+    } catch (err) {
+      console.error('Error al recuperar usuario:', err);
+      // Si el servidor dice que el token no vale (401), cerramos sesión
+      if (err.response?.status === 401) logout();
+    } finally {
+      // Terminamos el estado de carga independientemente del resultado
+      setLoading(false);
     }
   }, [token]);
 
+  // Se ejecuta cada vez que el token cambia
+  useEffect(() => {
+    cargarUsuario();
+  }, [cargarUsuario]);
+
+  // Función para iniciar sesión
   const login = async ({ credencial, contraseña }) => {
+    // Enviamos datos al backend
     const res = await api.post('/login', { credencial, contraseña });
-    const t = res.data.token || res.data.token_plain || res.data.access_token;
-    if (!t) throw new Error('No se recibió token');
-    localStorage.setItem('token', t);
-    setToken(t);
-    const usuario = res.data.usuario || res.data.user || res.data;
-    setUser(usuario);
+    const nuevoToken = res.data.token;
+    
+    // Guardamos en LocalStorage y en el estado de React
+    localStorage.setItem('token', nuevoToken);
+    setToken(nuevoToken);
     return res;
   };
 
-  const logout = async () => {
-    try { await api.post('/logout'); } catch (e) { /* ignore */ }
+  // Función para cerrar sesión
+  const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
     setUser(null);
   };
 
-  const toggleTheme = () => {
-    const next = themeMode === 'light' ? 'dark' : 'light';
-    setThemeMode(next);
-    localStorage.setItem('themeMode', next);
-  };
-
+  // Proveemos los datos y funciones a toda la aplicación
   return (
-    <AuthContext.Provider value={{ token, user, loading, login, logout, themeMode, toggleTheme }}>
+    <AuthContext.Provider value={{ token, user, loading, login, logout, cargarUsuario }}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+export default AuthProvider;

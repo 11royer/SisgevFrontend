@@ -42,7 +42,7 @@ export default function Layout({ children }) {
           minHeight: '100vh',
           // Margen y ancho solo en escritorio (sm y superior)
           width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` }, 
-          marginLeft: { sm: `${DRAWER_WIDTH}px` }
+          marginLeft: { sm: `0` }
         }}
       >
         <Toolbar /> 
