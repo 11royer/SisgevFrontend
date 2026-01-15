@@ -1,140 +1,125 @@
 // src/components/roles/RoleForm.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   TextField,
   Button,
+  Grid,
   Paper,
   Typography,
-  Alert,
+  Divider,
   CircularProgress,
-  Grid,
+  Alert
 } from '@mui/material';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
+import SecurityIcon from '@mui/icons-material/Security';
 
-/**
- * Formulario para crear/editar roles
- * @param {Object} props - Propiedades del componente
- * @param {Object} props.role - Rol a editar (opcional)
- * @param {Function} props.onSubmit - Función al enviar el formulario
- * @param {Function} props.onCancel - Función al cancelar
- * @param {boolean} props.loading - Estado de carga
- */
 const RoleForm = ({ role, onSubmit, onCancel, loading }) => {
-  // Estado del formulario
+  // --- ESTADOS ---
   const [formData, setFormData] = useState({
-    nombre: '',
-    descripcion: '',
+    nombre: role?.nombre || '',
+    descripcion: role?.descripcion || '',
   });
-
   const [error, setError] = useState(null);
 
-  // Si estamos editando, cargar datos del rol
-  useEffect(() => {
-    if (role) {
-      setFormData({
-        nombre: role.nombre || '',
-        descripcion: role.descripcion || '',
-      });
-    }
-  }, [role]);
-
-  // Manejar cambios en los campos
+  // --- MANEJADORES ---
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-    setError(null); // Limpiar error al cambiar
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Manejar envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-
-    // Validaciones
-    if (!formData.nombre.trim()) {
-      setError('El nombre del rol es requerido');
-      return;
-    }
-
-    if (formData.nombre.length > 50) {
-      setError('El nombre no debe exceder los 50 caracteres');
-      return;
-    }
-
-    if (formData.descripcion && formData.descripcion.length > 255) {
-      setError('La descripción no debe exceder los 255 caracteres');
-      return;
-    }
-
     try {
       await onSubmit(formData);
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al guardar rol');
+      setError(err.response?.data?.message || 'Error al procesar la solicitud');
     }
   };
 
   return (
-    <Paper elevation={3} sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        {role ? 'Editar Rol' : 'Nuevo Rol'}
-      </Typography>
+    <Paper elevation={3} sx={{ p: '2rem', borderRadius: '0.5rem', width: '100%' }}>
+      {/* ENCABEZADO DEL FORMULARIO */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: '1rem', mb: '1.5rem' }}>
+        <SecurityIcon color="primary" />
+        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+          {role ? `Editar Rol: ${role.nombre}` : 'Registrar Nuevo Rol de Acceso'}
+        </Typography>
+      </Box>
+      
+      <Divider sx={{ mb: '2rem' }} />
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: '1.5rem', borderRadius: '0.5rem' }}>
           {error}
         </Alert>
       )}
 
-      <Box component="form" onSubmit={handleSubmit}>
-        <Grid container spacing={2}>
-          {/* Nombre del rol */}
-          <Grid item xs={12}>
+      <form onSubmit={handleSubmit}>
+        <Grid container spacing="1.5rem">
+          {/* NOMBRE DEL ROL */}
+          <Grid item xs={12} md={5}>
             <TextField
               fullWidth
               label="Nombre del Rol"
               name="nombre"
               value={formData.nombre}
               onChange={handleChange}
+              placeholder="Ej: Operador de Guardia"
               required
               size="small"
-              helperText="Ej: Administrador, Operador, Técnico, Consulta"
+              helperText="El nombre debe ser único en el sistema"
+              disabled={role?.id <= 4} // Evita renombrar roles base
             />
           </Grid>
 
-          {/* Descripción */}
-          <Grid item xs={12}>
+          {/* DESCRIPCIÓN */}
+          <Grid item xs={12} md={7}>
             <TextField
               fullWidth
-              label="Descripción"
+              label="Descripción de Funciones"
               name="descripcion"
               value={formData.descripcion}
               onChange={handleChange}
+              placeholder="Describa los permisos o nivel de acceso..."
               multiline
-              rows={3}
+              rows={1}
               size="small"
-              helperText="Describa las funciones y permisos de este rol"
             />
           </Grid>
         </Grid>
 
-        {/* Botones de acción */}
-        <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-          <Button onClick={onCancel} disabled={loading}>
+        {/* NOTA ACLARATORIA */}
+        <Box sx={{ mt: '2rem', p: '1rem', bgcolor: 'action.hover', borderRadius: '0.4rem' }}>
+          <Typography variant="caption" color="text.secondary" display="block">
+            * Los roles definen qué módulos puede ver el usuario. Al crear un rol personalizado, 
+            asegúrese de que el nombre sea descriptivo para la jerarquía policial.
+          </Typography>
+        </Box>
+
+        {/* ACCIONES */}
+        <Box sx={{ mt: '3rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+          <Button 
+            variant="outlined" 
+            color="error" 
+            onClick={onCancel} 
+            startIcon={<CancelIcon />}
+            disabled={loading}
+          >
             Cancelar
           </Button>
-          <Button
-            type="submit"
-            variant="contained"
+          <Button 
+            type="submit" 
+            variant="contained" 
+            color="primary" 
+            startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
             disabled={loading}
-            startIcon={loading && <CircularProgress size={20} />}
           >
-            {loading ? 'Guardando...' : role ? 'Actualizar' : 'Crear'}
+            {loading ? 'Guardando...' : 'Guardar Configuración'}
           </Button>
         </Box>
-      </Box>
+      </form>
     </Paper>
   );
 };

@@ -20,10 +20,12 @@ import BuildIcon from '@mui/icons-material/Build';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import BarChartIcon from '@mui/icons-material/BarChart';
-import SecurityIcon from '@mui/icons-material/Security'; // ✅ AGREGADO
-import InventoryIcon from '@mui/icons-material/Inventory'; // Para repuestos
-import AssignmentIcon from '@mui/icons-material/Assignment'; // Para asignaciones
+import SecurityIcon from '@mui/icons-material/Security';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 
+
+// CONFIGURACIÓN DE ITEMS DEL MENÚ
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
   { text: 'Mi Perfil', icon: <AccountCircleIcon />, path: '/perfil' },
@@ -43,39 +45,53 @@ export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle })
   const navigate = useNavigate();
   const location = useLocation();
 
+
+  // CONTENIDO PRINCIPAL DEL DRAWER
   const drawer = (
     <div>
+      {/* ENCABEZADO DEL SIDEBAR */}
       <Toolbar sx={{
-        color: theme.palette.text.primary,
-        p: '1rem 0'
+        minHeight: '4rem',
+        borderBottom: `0.0625rem solid ${theme.palette.divider}`,
+        padding: '1rem 0'
       }}>
         <Typography variant="h6" sx={{
-          ml: '1.5rem',
+          marginLeft: '1.5rem',
           fontWeight: 700,
-          color: theme.palette.primary.main
+          color: theme.palette.primary.main,
+          fontSize: '1.125rem'
         }}>
           SISGEV-P
         </Typography>
       </Toolbar>
-      
+
+      {/* LISTA DE ITEMS DEL MENÚ */}
       <List>
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
+          
           return (
             <ListItem key={item.text} disablePadding>
               <ListItemButton
                 onClick={() => {
                   navigate(item.path);
+                  // CERRAR SIDEBAR EN MÓVIL AL SELECCIONAR
                   if (mobileOpen) {
                     handleDrawerToggle();
                   }
                 }}
                 sx={{
-                  mx: '1rem',
+                  // ESPACIADO Y MÁRGENES
+                  margin: '0 1rem',
+                  marginBottom: '0.25rem',
                   borderRadius: '0.5rem',
+                  
+                  // COLOR SEGÚN ACTIVO/INACTIVO
                   backgroundColor: isActive
                     ? theme.palette.primary.dark
                     : 'transparent',
+                  
+                  // EFECTO HOVER
                   '&:hover': {
                     backgroundColor: isActive
                       ? theme.palette.primary.dark
@@ -83,15 +99,21 @@ export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle })
                   }
                 }}
               >
+                {/* ICONO DEL ITEM */}
                 <ListItemIcon sx={{
                   color: isActive ? theme.palette.primary.light : theme.palette.text.secondary,
                   minWidth: '2.5rem'
                 }}>
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText primary={item.text} sx={{
-                  color: isActive ? theme.palette.text.primary : theme.palette.text.secondary,
-                }}/>
+                
+                {/* TEXTO DEL ITEM */}
+                <ListItemText 
+                  primary={item.text} 
+                  sx={{
+                    color: isActive ? theme.palette.text.primary : theme.palette.text.secondary,
+                  }}
+                />
               </ListItemButton>
             </ListItem>
           );
@@ -102,7 +124,7 @@ export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle })
 
   return (
     <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
-      {/* Versión móvil */}
+      {/* VERSIÓN MÓVIL - TEMPORAL */}
       <Drawer
         variant="temporary"
         open={mobileOpen}
@@ -119,8 +141,8 @@ export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle })
       >
         {drawer}
       </Drawer>
-      
-      {/* Versión escritorio */}
+
+      {/* VERSIÓN ESCRITORIO - PERMANENTE */}
       <Drawer
         variant="permanent"
         sx={{
@@ -129,7 +151,7 @@ export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle })
             boxSizing: 'border-box',
             width: drawerWidth,
             backgroundColor: theme.palette.background.paper,
-            borderRight: `1px solid ${theme.palette.divider || 'rgba(255, 255, 255, 0.12)'}`,
+            borderRight: `0.0625rem solid ${theme.palette.divider}`,
           },
         }}
         open

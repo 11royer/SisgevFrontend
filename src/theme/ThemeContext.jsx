@@ -1,46 +1,39 @@
 // src/theme/ThemeContext.jsx
-import React, { createContext, useState, useMemo, useContext } from 'react';
+import React, { useState, useMemo } from 'react';
 import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
-import { getTheme } from './theme';
+import CssBaseline from '@mui/material/CssBaseline';
+import { getTheme } from './theme'; // Tu configuración de Verde Policial
+import { ThemeContext } from './ThemeContextRef'; // Importamos la referencia JS
 
-// 1. Crea el Contexto
-export const ThemeContext = createContext({ 
-    mode: 'dark', // Valor por defecto
-    toggleColorMode: () => {}, // Función para cambiar el modo
-});
+const ThemeProvider = ({ children }) => {
+  // Lógica de persistencia idéntica a la que ya tienes
+  const [mode, setMode] = useState(() => {
+    const savedMode = localStorage.getItem('colorMode');
+    return savedMode || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  });
 
-// Hook personalizado para usar el tema fácilmente
-export const useThemeContext = () => useContext(ThemeContext);
+  const colorMode = useMemo(() => ({
+    mode,
+    toggleColorMode: () => {
+      setMode((prev) => {
+        const newMode = prev === 'light' ? 'dark' : 'light';
+        localStorage.setItem('colorMode', newMode);
+        return newMode;
+      });
+    },
+  }), [mode]);
 
-// 2. Componente Proveedor
-export function ThemeContextProvider({ children }) {
-    // Lee el modo preferido del sistema o de localStorage al inicio
-    const preferredMode = window.localStorage.getItem('colorMode') || (
-        window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    );
-    
-    const [mode, setMode] = useState(preferredMode);
+  // Aplicamos tu configuración de theme.js (Verde Policial, etc)
+  const theme = useMemo(() => createTheme(getTheme(mode)), [mode]);
 
-    // Función para cambiar el modo y guardarlo en localStorage
-    const colorMode = useMemo(() => ({
-        mode,
-        toggleColorMode: () => {
-            setMode((prevMode) => {
-                const newMode = prevMode === 'light' ? 'dark' : 'light';
-                window.localStorage.setItem('colorMode', newMode); // Persistencia
-                return newMode;
-            });
-        },
-    }), [mode]);
+  return (
+    <ThemeContext.Provider value={colorMode}>
+      <MuiThemeProvider theme={theme}>
+        <CssBaseline /> 
+        {children}
+      </MuiThemeProvider>
+    </ThemeContext.Provider>
+  );
+};
 
-    // 3. Genera el tema de MUI cada vez que 'mode' cambie
-    const theme = useMemo(() => createTheme(getTheme(mode)), [mode]);
-
-    return (
-        <ThemeContext.Provider value={colorMode}>
-            <MuiThemeProvider theme={theme}>
-                {children}
-            </MuiThemeProvider>
-        </ThemeContext.Provider>
-    );
-}
+export default ThemeProvider;

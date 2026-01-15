@@ -1,137 +1,110 @@
-import React, { useState } from 'react';
-import { DataGrid, GridToolbar, GridActionsCellItem } from '@mui/x-data-grid';
-import { Box, Chip, Avatar, Tooltip } from '@mui/material';
+// src/components/usuarios/UsuarioTable.jsx
+import React from 'react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  Avatar,
+  Typography,
+  Chip,
+  Tooltip,
+  Box // <--- Faltaba esta importación, por eso se ponía en blanco
+} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PersonIcon from '@mui/icons-material/Person';
 
-/**
- * Tabla de usuarios sincronizada con UsuarioResource.php
- */
-const UsuarioTable = ({ usuarios = [], onEdit, onDelete, onView, loading }) => {
-  const [pageSize, setPageSize] = useState(10);
-
-  // Definición de columnas basada EXACTAMENTE en tu UsuarioResource.php
-  const columns = [
-    {
-      field: 'foto_url',
-      headerName: 'Foto',
-      width: 70,
-      renderCell: (params) => (
-        <Avatar
-          src={params.value}
-          alt={params.row.nombre_completo}
-          sx={{ width: 35, height: 35 }}
-        >
-          {!params.value && <PersonIcon />}
-        </Avatar>
-      ),
-      sortable: false,
-      filterable: false,
-    },
-    {
-      field: 'nombre_completo', // Coincide con tu Resource
-      headerName: 'Nombre Completo',
-      flex: 1,
-      minWidth: 180,
-    },
-    {
-      field: 'usuario', // Coincide con tu Resource
-      headerName: 'Usuario',
-      width: 130,
-    },
-    {
-      field: 'email', // Coincide con tu Resource
-      headerName: 'Email',
-      flex: 1,
-      minWidth: 180,
-    },
-    {
-      field: 'rol',
-      headerName: 'Rol',
-      width: 150,
-      renderCell: (params) => {
-        // Tu Resource envía un objeto: { id, nombre, descripcion }
-        // Extraemos solo el nombre para mostrarlo
-        const nombreRol = params.value && typeof params.value === 'object' 
-          ? params.value.nombre 
-          : 'Sin rol';
-
-        return (
-          <Chip 
-            label={nombreRol} 
-            variant="outlined" 
-            size="small" 
-            color="primary"
-          />
-        );
-      }
-    },
-    {
-      field: 'estado',
-      headerName: 'Estado',
-      width: 110,
-      renderCell: (params) => {
-        // Tu Resource envía: (bool)$this->estado
-        const activo = params.value === true || params.value === 1;
-        return (
-          <Chip
-            label={activo ? 'Activo' : 'Inactivo'}
-            color={activo ? 'success' : 'error'}
-            size="small"
-          />
-        );
-      },
-    },
-    {
-      field: 'actions',
-      headerName: 'Acciones',
-      type: 'actions',
-      width: 120,
-      getActions: (params) => [
-        <GridActionsCellItem
-          icon={<Tooltip title="Ver"><VisibilityIcon color="info" /></Tooltip>}
-          label="Ver"
-          onClick={() => onView(params.row)}
-        />,
-        <GridActionsCellItem
-          icon={<Tooltip title="Editar"><EditIcon color="warning" /></Tooltip>}
-          label="Editar"
-          onClick={() => onEdit(params.row)}
-        />,
-        <GridActionsCellItem
-          icon={<Tooltip title="Eliminar"><DeleteIcon color="error" /></Tooltip>}
-          label="Eliminar"
-          onClick={() => onDelete(params.row)}
-          disabled={params.row.id === 1} // Protección para admin principal
-        />,
-      ],
-    },
-  ];
-
+const UsuarioTable = ({ usuarios, onEdit, onDelete, onView }) => {
+  // --- RENDERIZADO ---
   return (
-    <Box sx={{ height: 500, width: '100%' }}>
-      <DataGrid
-        rows={Array.isArray(usuarios) ? usuarios : []}
-        columns={columns}
-        loading={loading}
-        pageSize={pageSize}
-        onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-        rowsPerPageOptions={[5, 10, 20]}
-        disableSelectionOnClick
-        getRowId={(row) => row.id} // Usa el ID que viene del Resource
-        components={{
-          Toolbar: GridToolbar,
-        }}
-        sx={{
-          boxShadow: 1,
-          '& .MuiDataGrid-columnHeaders': {
-            backgroundColor: '#f5f5f5',
-          },
-        }}
-      />
-    </Box>
+    <TableContainer component={Paper} elevation={3} sx={{ borderRadius: '0.5rem', width: '100%' }}>
+      <Table size="small">
+        {/* CABECERA UNIFICADA CON ESTILO SISGEV-P */}
+        <TableHead>
+          <TableRow>
+            <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Funcionario</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Usuario</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Rol / Cargo</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Contacto</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default', textAlign: 'center' }}>Acciones</TableCell>
+          </TableRow>
+        </TableHead>
+
+        <TableBody>
+          {usuarios.map((usuario) => (
+            <TableRow key={usuario.id} hover>
+              {/* COLUMNA PERFIL CON AVATAR */}
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <Avatar 
+                    src={usuario.foto_url} 
+                    sx={{ width: '2.5rem', height: '2.5rem', bgcolor: 'primary.light' }}
+                  >
+                    <PersonIcon />
+                  </Avatar>
+                  <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                    {usuario.nombre_completo}
+                  </Typography>
+                </Box>
+              </TableCell>
+
+              <TableCell>{usuario.usuario}</TableCell>
+
+              <TableCell>
+                <Chip 
+                  label={usuario.rol?.nombre || 'Sin Rol'} 
+                  size="small" 
+                  color="primary" 
+                  variant="outlined" 
+                  sx={{ fontWeight: 'bold' }}
+                />
+              </TableCell>
+
+              <TableCell>
+                <Typography variant="caption" display="block">{usuario.email}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {usuario.telefono || 'Sin teléfono'}
+                </Typography>
+              </TableCell>
+
+              {/* ACCIONES DE GESTIÓN */}
+              <TableCell sx={{ textAlign: 'center' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', gap: '0.25rem' }}>
+                  <Tooltip title="Ver Detalles">
+                    <IconButton size="small" color="info" onClick={() => onView(usuario)}>
+                      <VisibilityIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Editar">
+                    <IconButton size="small" color="primary" onClick={() => onEdit(usuario)}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Eliminar">
+                    <IconButton size="small" color="error" onClick={() => onDelete(usuario)}>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
+            </TableRow>
+          ))}
+          {usuarios.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={5} sx={{ textAlign: 'center', py: 3 }}>
+                <Typography color="text.secondary">No se encontraron usuarios registrados.</Typography>
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };
 

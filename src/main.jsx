@@ -1,26 +1,27 @@
 // src/main.jsx
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { CssBaseline } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import AuthProvider from './auth/AuthContext';
-import { ThemeContextProvider } from './theme/ThemeContext';
+
+// IMPORTACIONES DE CONTEXTOS
+import ThemeProvider from './theme/ThemeContext';
+import AuthProvider from './auth/AuthContext'; 
 import AppRoutes from './App';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ThemeContextProvider>
+    {/* 1. El Tema envuelve todo para que los colores existan desde el inicio */}
+    <ThemeProvider>
       <LocalizationProvider dateAdapter={AdapterDateFns}>
-        <CssBaseline />
+        {/* AuthProvider va dentro del tema para que si hay alertas en el login tengan estilo */}
         <AuthProvider>
           <BrowserRouter>
             <AppRoutes />
           </BrowserRouter>
         </AuthProvider>
       </LocalizationProvider>
-    </ThemeContextProvider>
+    </ThemeProvider>
   </React.StrictMode>
 );

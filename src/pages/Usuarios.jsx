@@ -10,8 +10,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress,
-  Paper,
+  CircularProgress
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import Layout from '../layout/Layout';
@@ -20,100 +19,61 @@ import UsuarioForm from '../components/usuarios/UsuarioForm';
 import { usuarioService } from '../services/UsuarioService';
 import useAuth from '../auth/UseAuth';
 
-/**
- * Página principal de gestión de usuarios 
- */
 const Usuarios = () => {
+  const { user: currentUser } = useAuth();
+
+  // --- ESTADOS DE DATOS ---
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // --- ESTADOS DE INTERFAZ ---
   const [showForm, setShowForm] = useState(false);
   const [usuarioEdit, setUsuarioEdit] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [usuarioToDelete, setUsuarioToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
-  
-  const { user: currentUser } = useAuth();
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
     cargarUsuarios();
   }, []);
 
-  /**
-   * CARGA DE USUARIOS - AQUÍ ESTABA EL ERROR
-   */
+  // --- LÓGICA DE CARGA ---
   const cargarUsuarios = async () => {
     try {
       setLoading(true);
       const response = await usuarioService.getAll();
-      
-      // EXPLICACIÓN DEL CAMBIO:
-      // response.data es la respuesta de Axios.
-      // response.data.data es el array que envía el UsuarioResource de Laravel.
-      const dataLimpia = response.data.data || response.data; 
-      
-      setUsuarios(dataLimpia);
-      
+      setUsuarios(response.data.data || response.data);
     } catch (error) {
-      console.error('Error cargando usuarios:', error);
-      mostrarSnackbar('Error al cargar usuarios', 'error');
+      mostrarSnackbar('Error al cargar la lista de usuarios', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const mostrarSnackbar = (message, severity = 'success') => {
-    setSnackbar({ open: true, message, severity });
-  };
+  // --- MANEJADORES DE EVENTOS ---
+  const mostrarSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
+  const cerrarSnackbar = () => setSnackbar(prev => ({ ...prev, open: false }));
 
-  const cerrarSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
-  };
+  const handleNuevoUsuario = () => { setUsuarioEdit(null); setShowForm(true); };
+  const handleEditarUsuario = (u) => { setUsuarioEdit(u); setShowForm(true); };
 
-  const handleNuevoUsuario = () => {
-    setUsuarioEdit(null);
-    setShowForm(true);
-  };
-
-  const handleEditarUsuario = (usuario) => {
-    setUsuarioEdit(usuario);
-    setShowForm(true);
-  };
-
-  const handleVerUsuario = (usuario) => {
-    mostrarSnackbar(`Viendo detalles de ${usuario.name}`, 'info');
-  };
-
-  const handleEliminarUsuario = (usuario) => {
-    if (usuario.id === currentUser?.id) {
-      mostrarSnackbar('No puedes eliminarte a ti mismo', 'error');
-      return;
-    }
-    if (usuario.id === 1) {
-      mostrarSnackbar('No se puede eliminar al administrador principal', 'error');
-      return;
-    }
-    setUsuarioToDelete(usuario);
+  const handleEliminarUsuario = (u) => {
+    if (u.id === currentUser?.id) return mostrarSnackbar('No puedes eliminar tu propia cuenta', 'error');
+    setUsuarioToDelete(u);
     setShowDeleteDialog(true);
   };
 
   const confirmarEliminarUsuario = async () => {
-    if (!usuarioToDelete) return;
     try {
       setDeleteLoading(true);
       await usuarioService.delete(usuarioToDelete.id);
-      setUsuarios(prev => prev.filter(u => u.id !== usuarioToDelete.id));
-      mostrarSnackbar('Usuario eliminado correctamente', 'success');
+      mostrarSnackbar('Usuario eliminado');
+      cargarUsuarios();
       setShowDeleteDialog(false);
-      setUsuarioToDelete(null);
     } catch (error) {
-      console.error('Error eliminando usuario:', error);
-      mostrarSnackbar(error.response?.data?.message || 'Error al eliminar usuario', 'error');
+      mostrarSnackbar('Error al eliminar', 'error');
     } finally {
       setDeleteLoading(false);
     }
@@ -122,115 +82,54 @@ const Usuarios = () => {
   const handleSubmitUsuario = async (formData) => {
     try {
       setFormLoading(true);
-      if (usuarioEdit) {
-        await usuarioService.update(usuarioEdit.id, formData);
-        mostrarSnackbar('Usuario actualizado correctamente', 'success');
-      } else {
-        await usuarioService.create(formData);
-        mostrarSnackbar('Usuario creado correctamente', 'success');
-      }
-      await cargarUsuarios();
+      if (usuarioEdit) await usuarioService.update(usuarioEdit.id, formData);
+      else await usuarioService.create(formData);
+      mostrarSnackbar('Datos guardados correctamente');
+      cargarUsuarios();
       setShowForm(false);
-      setUsuarioEdit(null);
-    } catch (error) {
-      console.error('Error guardando usuario:', error);
-      throw error;
-    } finally {
-      setFormLoading(false);
-    }
-  };
-
-  const handleCancelForm = () => {
-    setShowForm(false);
-    setUsuarioEdit(null);
+    } catch (error) { throw error; } finally { setFormLoading(false); }
   };
 
   return (
     <Layout>
-      <Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" color="text.primary">
-            Gestión de Usuarios
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleNuevoUsuario}
-            disabled={loading}
-          >
-            Nuevo Usuario
-          </Button>
+      <Box sx={{ width: '100%', p: { xs: '0.75rem', md: '1.5rem' } }}>
+        
+        {/* ENCABEZADO UNIFICADO */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '1rem' }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Gestión de Usuarios</Typography>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={handleNuevoUsuario}>Nuevo Usuario</Button>
         </Box>
 
-        {showForm ? (
-          <UsuarioForm
-            usuario={usuarioEdit}
-            onSubmit={handleSubmitUsuario}
-            onCancel={handleCancelForm}
-            loading={formLoading}
-          />
-        ) : (
-          <>
-            <Paper elevation={2} sx={{ p: 2, mb: 3, bgcolor: 'rgba(2, 136, 209, 0.1)' }}>
-              <Typography variant="body2">
-                <strong>Nota:</strong> Administra los usuarios del sistema. Solo usuarios con rol 
-                "Administrador" pueden acceder a esta página.
-              </Typography>
-            </Paper>
+        {/* NOTA UNIFICADA */}
+        <Alert severity="info" sx={{ mb: '1.5rem', borderRadius: '0.5rem' }}>
+          Control de acceso para funcionarios policiales. Solo administradores pueden gestionar estas cuentas.
+        </Alert>
 
+        {/* CONTENIDO PRINCIPAL */}
+        {showForm ? (
+          <UsuarioForm usuario={usuarioEdit} onSubmit={handleSubmitUsuario} onCancel={() => setShowForm(false)} loading={formLoading} />
+        ) : (
+          <Box sx={{ width: '100%' }}>
             {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                <CircularProgress />
-              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: '5rem' }}><CircularProgress /></Box>
             ) : (
-              <UsuarioTable
-                usuarios={usuarios}
-                onEdit={handleEditarUsuario}
-                onDelete={handleEliminarUsuario}
-                onView={handleVerUsuario}
-                loading={loading}
-              />
+              <UsuarioTable usuarios={usuarios} onEdit={handleEditarUsuario} onDelete={handleEliminarUsuario} />
             )}
-          </>
+          </Box>
         )}
 
-        <Dialog
-          open={showDeleteDialog}
-          onClose={() => !deleteLoading && setShowDeleteDialog(false)}
-        >
-          <DialogTitle>Confirmar Eliminación</DialogTitle>
-          <DialogContent>
-            <Typography>
-              ¿Estás seguro de eliminar al usuario{' '}
-              <strong>{usuarioToDelete?.name || usuarioToDelete?.nombre_completo}</strong>?
-              <br />
-              <small>Esta acción no se puede deshacer.</small>
-            </Typography>
-          </DialogContent>
+        {/* DIÁLOGO DE ELIMINACIÓN */}
+        <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
+          <DialogTitle>¿Eliminar Usuario?</DialogTitle>
+          <DialogContent><Typography>Esta acción no se puede deshacer para {usuarioToDelete?.nombre_completo}.</Typography></DialogContent>
           <DialogActions>
-            <Button onClick={() => setShowDeleteDialog(false)} disabled={deleteLoading}>
-              Cancelar
-            </Button>
-            <Button 
-              onClick={confirmarEliminarUsuario} 
-              color="error" 
-              disabled={deleteLoading}
-              startIcon={deleteLoading && <CircularProgress size={20} />}
-            >
-              {deleteLoading ? 'Eliminando...' : 'Eliminar'}
-            </Button>
+            <Button onClick={() => setShowDeleteDialog(false)}>Cancelar</Button>
+            <Button onClick={confirmarEliminarUsuario} color="error" variant="contained" disabled={deleteLoading}>Confirmar</Button>
           </DialogActions>
         </Dialog>
 
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={cerrarSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert onClose={cerrarSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
-            {snackbar.message}
-          </Alert>
+        <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={cerrarSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+          <Alert severity={snackbar.severity} variant="filled">{snackbar.message}</Alert>
         </Snackbar>
       </Box>
     </Layout>

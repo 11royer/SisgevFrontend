@@ -28,40 +28,25 @@ import Layout from '../layout/Layout';
 import RoleForm from '../components/roles/RoleForm';
 import { roleService } from '../services/RoleService';
 
-/**
- * Página principal de gestión de roles
- * Muestra lista de roles y permite CRUD
- */
 const Roles = () => {
-  // Estado para roles
+  // --- ESTADOS DE DATOS ---
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // Estado para formulario
+
+  // --- ESTADOS DE FORMULARIO Y DIÁLOGOS ---
   const [showForm, setShowForm] = useState(false);
   const [roleEdit, setRoleEdit] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
-  
-  // Estado para diálogo de confirmación
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  
-  // Estado para notificaciones
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Cargar roles al montar el componente
   useEffect(() => {
     cargarRoles();
   }, []);
 
-  /**
-   * Cargar lista de roles desde la API
-   */
+  // --- LÓGICA DE CARGA ---
   const cargarRoles = async () => {
     try {
       setLoading(true);
@@ -69,212 +54,135 @@ const Roles = () => {
       setRoles(response.data);
     } catch (error) {
       console.error('Error cargando roles:', error);
-      mostrarSnackbar('Error al cargar roles', 'error');
+      mostrarSnackbar('Error al cargar la lista de roles', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * Mostrar notificación
-   */
+  // --- MANEJADORES DE EVENTOS ---
   const mostrarSnackbar = (message, severity = 'success') => {
-    setSnackbar({
-      open: true,
-      message,
-      severity,
-    });
+    setSnackbar({ open: true, message, severity });
   };
 
-  /**
-   * Cerrar notificación
-   */
   const cerrarSnackbar = () => {
     setSnackbar(prev => ({ ...prev, open: false }));
   };
 
-  /**
-   * Manejar creación de nuevo rol
-   */
   const handleNuevoRol = () => {
     setRoleEdit(null);
     setShowForm(true);
   };
 
-  /**
-   * Manejar edición de rol
-   */
   const handleEditarRol = (role) => {
     setRoleEdit(role);
     setShowForm(true);
   };
 
-  /**
-   * Manejar solicitud de eliminación
-   */
   const handleEliminarRol = (role) => {
-    // No permitir eliminar roles del sistema (IDs 1-4)
     if (role.id <= 4) {
-      mostrarSnackbar('No se puede eliminar un rol del sistema', 'error');
+      mostrarSnackbar('No se puede eliminar un rol base del sistema', 'error');
       return;
     }
-    
     setRoleToDelete(role);
     setShowDeleteDialog(true);
   };
 
-  /**
-   * Confirmar eliminación de rol
-   */
   const confirmarEliminarRol = async () => {
     if (!roleToDelete) return;
-    
     try {
       setDeleteLoading(true);
       await roleService.delete(roleToDelete.id);
-      
-      // Actualizar lista
       setRoles(prev => prev.filter(r => r.id !== roleToDelete.id));
-      
       mostrarSnackbar('Rol eliminado correctamente', 'success');
       setShowDeleteDialog(false);
-      setRoleToDelete(null);
     } catch (error) {
-      console.error('Error eliminando rol:', error);
-      mostrarSnackbar(
-        error.response?.data?.message || 'Error al eliminar rol', 
-        'error'
-      );
+      mostrarSnackbar('Error al eliminar el rol', 'error');
     } finally {
       setDeleteLoading(false);
     }
   };
 
-  /**
-   * Manejar envío del formulario (crear/editar)
-   */
   const handleSubmitRol = async (formData) => {
     try {
       setFormLoading(true);
-      
       if (roleEdit) {
-        // Editar rol existente
         await roleService.update(roleEdit.id, formData);
-        mostrarSnackbar('Rol actualizado correctamente', 'success');
+        mostrarSnackbar('Rol actualizado correctamente');
       } else {
-        // Crear nuevo rol
         await roleService.create(formData);
-        mostrarSnackbar('Rol creado correctamente', 'success');
+        mostrarSnackbar('Rol creado correctamente');
       }
-      
-      // Recargar lista y cerrar formulario
       await cargarRoles();
       setShowForm(false);
-      setRoleEdit(null);
     } catch (error) {
       console.error('Error guardando rol:', error);
-      throw error; // Re-lanzar error para manejo en formulario
+      throw error;
     } finally {
       setFormLoading(false);
     }
   };
 
-  /**
-   * Cancelar formulario
-   */
-  const handleCancelForm = () => {
-    setShowForm(false);
-    setRoleEdit(null);
-  };
-
   return (
     <Layout>
-      <Box>
-        {/* Header con título y botón */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" color="text.primary">
-            Gestión de Roles
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleNuevoRol}
-            disabled={loading}
-          >
-            Nuevo Rol
-          </Button>
+      <Box sx={{ width: '100%', p: { xs: '0.75rem', md: '1.5rem' } }}>
+        
+        {/* ENCABEZADO UNIFICADO */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '1rem' }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Gestión de Roles</Typography>
+          {!showForm && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={handleNuevoRol} disabled={loading}>
+              Nuevo Rol
+            </Button>
+          )}
         </Box>
 
-        {/* Mostrar formulario o tabla */}
+        {/* NOTA UNIFICADA */}
+        <Alert severity="info" sx={{ mb: '1.5rem', borderRadius: '0.5rem' }}>
+          <Typography variant="body2">
+            <strong>Nota:</strong> Administra los niveles de acceso. Los roles del sistema (ID 1-4) son estructurales y no pueden eliminarse del SISGEV-P.
+          </Typography>
+        </Alert>
+
+        {/* CONTENIDO PRINCIPAL */}
         {showForm ? (
-          <RoleForm
-            role={roleEdit}
-            onSubmit={handleSubmitRol}
-            onCancel={handleCancelForm}
-            loading={formLoading}
-          />
+          <RoleForm role={roleEdit} onSubmit={handleSubmitRol} onCancel={() => setShowForm(false)} loading={formLoading} />
         ) : (
           <>
-            {/* Información sobre roles */}
-            <Paper elevation={2} sx={{ p: 2, mb: 3, bgcolor: 'info.light' }}>
-              <Typography variant="body2">
-                <strong>Nota:</strong> Administra los roles del sistema. Los roles con ID 1-4 son 
-                del sistema y no se pueden eliminar. Los nuevos roles deben ser asignados 
-                cuidadosamente considerando el principio de menor privilegio.
-              </Typography>
-            </Paper>
-
-            {/* Tabla de roles */}
             {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                <CircularProgress />
-              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: '5rem' }}><CircularProgress /></Box>
             ) : (
-              <TableContainer component={Paper} elevation={1}>
-                <Table>
-                  <TableHead sx={{ bgcolor: 'primary.light' }}>
+              <TableContainer component={Paper} elevation={3} sx={{ borderRadius: '0.5rem' }}>
+                <Table size="small">
+                  <TableHead>
                     <TableRow>
-                      <TableCell><strong>ID</strong></TableCell>
-                      <TableCell><strong>Nombre</strong></TableCell>
-                      <TableCell><strong>Descripción</strong></TableCell>
-                      <TableCell><strong>Tipo</strong></TableCell>
-                      <TableCell><strong>Acciones</strong></TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>ID</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Nombre del Rol</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Descripción</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Tipo</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Acciones</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {roles.map((role) => (
                       <TableRow key={role.id} hover>
                         <TableCell>{role.id}</TableCell>
+                        <TableCell sx={{ fontWeight: 'medium' }}>{role.nombre}</TableCell>
+                        <TableCell color="text.secondary">{role.descripcion || 'Sin descripción'}</TableCell>
                         <TableCell>
-                          <Typography fontWeight="medium">{role.nombre}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" color="text.secondary">
-                            {role.descripcion || 'Sin descripción'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={role.id <= 4 ? 'Sistema' : 'Personalizado'}
-                            color={role.id <= 4 ? 'primary' : 'default'}
-                            size="small"
+                          <Chip 
+                            label={role.id <= 4 ? 'Sistema' : 'Personalizado'} 
+                            color={role.id <= 4 ? 'primary' : 'default'} 
+                            size="small" 
+                            variant="outlined" 
                           />
                         </TableCell>
                         <TableCell>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEditarRol(role)}
-                            color="primary"
-                          >
-                            <EditIcon />
+                          <IconButton size="small" color="primary" onClick={() => handleEditarRol(role)}>
+                            <EditIcon fontSize="small" />
                           </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEliminarRol(role)}
-                            color="error"
-                            disabled={role.id <= 4}
-                          >
-                            <DeleteIcon />
+                          <IconButton size="small" color="error" disabled={role.id <= 4} onClick={() => handleEliminarRol(role)}>
+                            <DeleteIcon fontSize="small" />
                           </IconButton>
                         </TableCell>
                       </TableRow>
@@ -283,69 +191,25 @@ const Roles = () => {
                 </Table>
               </TableContainer>
             )}
-
-            {/* Contador de roles */}
-            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="body2" color="text.secondary">
-                Total de roles: {roles.length}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {roles.filter(r => r.id <= 4).length} roles del sistema,{' '}
-                {roles.filter(r => r.id > 4).length} roles personalizados
-              </Typography>
-            </Box>
           </>
         )}
 
-        {/* Diálogo de confirmación para eliminar */}
-        <Dialog
-          open={showDeleteDialog}
-          onClose={() => !deleteLoading && setShowDeleteDialog(false)}
-        >
+        {/* DIÁLOGOS Y NOTIFICACIONES */}
+        <Dialog open={showDeleteDialog} onClose={() => !deleteLoading && setShowDeleteDialog(false)} fullWidth maxWidth="xs">
           <DialogTitle>Confirmar Eliminación</DialogTitle>
           <DialogContent>
-            <Typography>
-              ¿Estás seguro de eliminar el rol{' '}
-              <strong>{roleToDelete?.nombre}</strong>?
-              <br />
-              <small>
-                Los usuarios con este rol quedarán sin rol asignado.
-                Esta acción no se puede deshacer.
-              </small>
-            </Typography>
+            <Typography>¿Estás seguro de eliminar el rol <strong>{roleToDelete?.nombre}</strong>?</Typography>
           </DialogContent>
           <DialogActions>
-            <Button 
-              onClick={() => setShowDeleteDialog(false)} 
-              disabled={deleteLoading}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={confirmarEliminarRol} 
-              color="error" 
-              disabled={deleteLoading}
-              startIcon={deleteLoading && <CircularProgress size={20} />}
-            >
+            <Button onClick={() => setShowDeleteDialog(false)} disabled={deleteLoading}>Cancelar</Button>
+            <Button onClick={confirmarEliminarRol} color="error" variant="contained" disabled={deleteLoading}>
               {deleteLoading ? 'Eliminando...' : 'Eliminar'}
             </Button>
           </DialogActions>
         </Dialog>
 
-        {/* Snackbar para notificaciones */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={cerrarSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert 
-            onClose={cerrarSnackbar} 
-            severity={snackbar.severity} 
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
+        <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={cerrarSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+          <Alert severity={snackbar.severity} variant="filled" sx={{ borderRadius: '0.5rem' }}>{snackbar.message}</Alert>
         </Snackbar>
       </Box>
     </Layout>
