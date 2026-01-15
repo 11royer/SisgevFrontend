@@ -7,10 +7,8 @@ import api from '../api/axios';
  */
 export const usuarioService = {
   
-  // ==========================================
-  // 1. GESTIÓN DE PERFIL (Para todos los roles)
-  // ==========================================
 
+  // 1. GESTIÓN DE PERFIL (Para todos los roles)
   /**
    * Obtiene la información del usuario actualmente autenticado
    * @endpoint GET /api/me
@@ -25,10 +23,8 @@ export const usuarioService = {
   cambiarPassword: (id, data) => api.post(`/usuarios/${id}/cambiar-password`, data),
 
 
-  // ==========================================
-  // 2. CRUD DE USUARIOS (Solo rol Administrador)
-  // ==========================================
 
+  // 2. CRUD DE USUARIOS (Solo rol Administrador)
   /**
    * Obtener lista completa de usuarios
    * @endpoint GET /api/usuarios

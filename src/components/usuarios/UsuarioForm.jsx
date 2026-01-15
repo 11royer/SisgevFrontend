@@ -20,16 +20,18 @@ import { roleService } from '../../services/RoleService';
 
 const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
   // -- ESTADOS --
+  // Actualización Paso 2: Inicializamos 'contraseña' vacía siempre.
   const [formData, setFormData] = useState({
     nombre_completo: usuario?.nombre_completo || '',
     usuario: usuario?.usuario || '',
     email: usuario?.email || '',
     telefono: usuario?.telefono || '',
-    id_rol: usuario?.id_rol || '',
+    id_rol: usuario?.id_rol || '', 
+    contraseña: '', //Evita error de 'uncontrolled input' y permite editar
   });
 
-  const [roles, setRoles] = useState([]); // Nuevo estado para roles
-  const [cargandoRoles, setCargandoRoles] = useState(false); // Estado de carga
+  const [roles, setRoles] = useState([]); 
+  const [cargandoRoles, setCargandoRoles] = useState(false); 
 
   // -- EFECTO PARA CARGAR ROLES --
   useEffect(() => {
@@ -44,7 +46,6 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
         setCargandoRoles(false);
       }
     };
-
     cargarRoles();
   }, []);
 
@@ -63,10 +64,12 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
       <Typography variant="h6" sx={{ mb: '1.5rem', fontWeight: 'bold' }}>
         {usuario ? 'Editar Funcionario' : 'Registrar Nuevo Funcionario'}
       </Typography>
-      <Divider sx={{ mb: '2rem' }} />
       
+      <Divider sx={{ mb: '2rem' }} />
+
       <form onSubmit={handleSubmit}>
         <Grid container spacing="1.5rem">
+          
           {/* Campo: Nombre Completo */}
           <Grid item xs={12} md={6}>
             <TextField
@@ -79,7 +82,7 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
               size="small"
             />
           </Grid>
-          
+
           {/* Campo: Usuario */}
           <Grid item xs={12} md={6}>
             <TextField
@@ -92,7 +95,7 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
               size="small"
             />
           </Grid>
-          
+
           {/* Campo: Email */}
           <Grid item xs={12} md={6}>
             <TextField
@@ -106,13 +109,13 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
               size="small"
             />
           </Grid>
-          
-          {/* Campo: Rol - AHORA DINÁMICO */}
+
+          {/* Campo: Rol - DINÁMICO */}
           <Grid item xs={12} md={6}>
             <FormControl fullWidth size="small" required>
               <InputLabel>Asignar Rol</InputLabel>
               <Select
-                name="id_rol" // Cambiado a id_rol
+                name="id_rol"
                 value={formData.id_rol}
                 onChange={handleChange}
                 label="Asignar Rol"
@@ -134,7 +137,7 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
               )}
             </FormControl>
           </Grid>
-          
+
           {/* Campo: Teléfono */}
           <Grid item xs={12} md={6}>
             <TextField
@@ -146,25 +149,33 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
               size="small"
             />
           </Grid>
-          
-          {/* Campo: Contraseña solo para nuevos usuarios */}
-          {!usuario && (
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Contraseña Inicial"
-                name="contraseña" // Nombre exacto que espera tu backend
-                type="password"
-                onChange={handleChange}
-                required
-                size="small"
-                helperText="Mínimo 6 caracteres"
-              />
-            </Grid>
-          )}
+
+          {/*  SECCIÓN DE CONTRASEÑA 
+             Ahora siempre visible, pero opcional si estamos editando.
+          */}
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              // Cambiamos el label dependiendo si es nuevo o edición
+              label={usuario ? "Nueva Contraseña (Dejar vacío para no cambiar)" : "Contraseña Inicial"}
+              name="contraseña"
+              type="password"
+              onChange={handleChange}
+              // Solo es required si NO existe usuario (modo crear)
+              required={!usuario} 
+              size="small"
+              helperText={usuario 
+                  ? "Escriba aquí solo si desea resetear la clave del usuario." 
+                  : "Mínimo 6 caracteres"
+              }
+              // Aseguramos que el valor no sea undefined
+              value={formData.contraseña || ''} 
+            />
+          </Grid>
+
         </Grid>
-        
-        {/* Botones */}
+
+        {/* Botones de Acción */}
         <Box sx={{ mt: '3rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
           <Button
             variant="outlined"

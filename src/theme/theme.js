@@ -12,7 +12,7 @@ const policeGreen = {
   400: '#66bb6a',
   500: '#4caf50', 
   600: '#43a047',
-  700: '#2e7d32', // Color principal SISGEV-P
+  700: '#2e7d32', // Color principal
   800: '#1b5e20',
   900: '#0d3211',
 };
