@@ -1,6 +1,7 @@
 // src/components/usuarios/UsuarioTable.jsx
 import React from 'react';
 import {
+  Box,
   Table,
   TableBody,
   TableCell,
@@ -13,15 +14,12 @@ import {
   Typography,
   Chip,
   Tooltip,
-  Box // <--- Faltaba esta importación, por eso se ponía en blanco
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import PersonIcon from '@mui/icons-material/Person';
 
 const UsuarioTable = ({ usuarios, onEdit, onDelete, onView }) => {
-  // --- RENDERIZADO ---
   return (
     <TableContainer component={Paper} elevation={3} sx={{ borderRadius: '0.5rem', width: '100%' }}>
       <Table size="small">
@@ -42,8 +40,8 @@ const UsuarioTable = ({ usuarios, onEdit, onDelete, onView }) => {
               {/* COLUMNA PERFIL CON AVATAR */}
               <TableCell>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <Avatar 
-                    src={usuario.foto_url} 
+                  <Avatar
+                    src={usuario.foto_url}
                     sx={{ width: '2.5rem', height: '2.5rem', bgcolor: 'primary.light' }}
                   >
                     <PersonIcon />
@@ -57,11 +55,11 @@ const UsuarioTable = ({ usuarios, onEdit, onDelete, onView }) => {
               <TableCell>{usuario.usuario}</TableCell>
 
               <TableCell>
-                <Chip 
-                  label={usuario.rol?.nombre || 'Sin Rol'} 
-                  size="small" 
-                  color="primary" 
-                  variant="outlined" 
+                <Chip
+                  label={usuario.rol?.nombre || 'Sin Rol'}
+                  size="small"
+                  color="primary"
+                  variant="outlined"
                   sx={{ fontWeight: 'bold' }}
                 />
               </TableCell>
@@ -73,21 +71,26 @@ const UsuarioTable = ({ usuarios, onEdit, onDelete, onView }) => {
                 </Typography>
               </TableCell>
 
-              {/* ACCIONES DE GESTIÓN */}
+              {/* ACCIONES DE GESTIÓN - SOLO EDITAR Y ELIMINAR */}
               <TableCell sx={{ textAlign: 'center' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'center', gap: '0.25rem' }}>
-                  <Tooltip title="Ver Detalles">
-                    <IconButton size="small" color="info" onClick={() => onView(usuario)}>
-                      <VisibilityIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                  
                   <Tooltip title="Editar">
-                    <IconButton size="small" color="primary" onClick={() => onEdit(usuario)}>
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={() => onEdit(usuario)}
+                    >
                       <EditIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
+
                   <Tooltip title="Eliminar">
-                    <IconButton size="small" color="error" onClick={() => onDelete(usuario)}>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => onDelete(usuario)}
+                    >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
@@ -95,10 +98,13 @@ const UsuarioTable = ({ usuarios, onEdit, onDelete, onView }) => {
               </TableCell>
             </TableRow>
           ))}
+
           {usuarios.length === 0 && (
             <TableRow>
               <TableCell colSpan={5} sx={{ textAlign: 'center', py: 3 }}>
-                <Typography color="text.secondary">No se encontraron usuarios registrados.</Typography>
+                <Typography color="text.secondary">
+                  No se encontraron usuarios registrados.
+                </Typography>
               </TableCell>
             </TableRow>
           )}
