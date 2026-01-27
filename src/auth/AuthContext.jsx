@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       // Petición a la ruta de perfil (asegúrate que en Laravel sea /api/me)
       const res = await api.get('/me');
-      setUser(res.data);
+      setUser(res.data.data || res.data);
     } catch (err) {
       console.error('Error al recuperar usuario:', err);
       // Si el servidor dice que el token no vale (401), cerramos sesión
