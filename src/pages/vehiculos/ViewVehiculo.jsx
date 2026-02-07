@@ -49,7 +49,6 @@ const ViewVehiculo = () => {
       const response = await vehiculoService.getById(id);
       setVehiculo(response.data.data);
       
-      // Cargar historial
       const historialResponse = await vehiculoService.getHistorial(id);
       setHistorial(historialResponse.data.historial_completo);
     } catch (error) {
@@ -59,13 +58,8 @@ const ViewVehiculo = () => {
     }
   };
   
-  const handleEditar = () => {
-    navigate(`/vehiculos/editar/${id}`);
-  };
-  
-  const handleVolver = () => {
-    navigate('/vehiculos');
-  };
+  const handleEditar = () => navigate(`/vehiculos/editar/${id}`);
+  const handleVolver = () => navigate('/vehiculos');
   
   if (loading) {
     return (
@@ -89,283 +83,185 @@ const ViewVehiculo = () => {
     <Layout>
       <Box sx={{ width: '100%', p: { xs: '0.75rem', md: '1.5rem' } }}>
         
-        {/* Encabezado con botones */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          mb: '1.5rem',
-          flexWrap: 'wrap',
-          gap: '1rem'
-        }}>
+        {/* Encabezado */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <Button
-              variant="outlined"
-              startIcon={<ArrowBackIcon />}
-              onClick={handleVolver}
-              size="small"
-            >
+            <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={handleVolver} size="small">
               Volver
             </Button>
-            
             <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
               {vehiculo.marca} {vehiculo.modelo}
             </Typography>
-            
-            <Chip
-              label={`Placa: ${vehiculo.placa}`}
-              color="primary"
-              variant="outlined"
-              sx={{ fontWeight: 'bold' }}
-            />
+            <Chip label={`Placa: ${vehiculo.placa}`} color="primary" variant="outlined" sx={{ fontWeight: 'bold' }} />
+            {vehiculo.sigla && <Chip label={`Sigla: ${vehiculo.sigla}`} color="secondary" variant="filled" size="small" />}
           </Box>
-          
-          <Button
-            variant="contained"
-            startIcon={<EditIcon />}
-            onClick={handleEditar}
-          >
+          <Button variant="contained" startIcon={<EditIcon />} onClick={handleEditar}>
             Editar Vehículo
           </Button>
         </Box>
         
-        {/* Tarjeta de información principal */}
+        {/* Tarjeta de Información Detallada */}
         <Paper elevation={3} sx={{ p: '1.5rem', mb: '1.5rem', borderRadius: '0.75rem' }}>
-          <Grid container spacing="1.5rem">
+          <Grid container spacing="2rem">
             
-            {/* Columna izquierda - Información básica */}
+            {/* Columna 1: Identificación y Técnica */}
             <Grid item xs={12} md={6}>
-              <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold' }}>
-                Información del Vehículo
+              <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold', color: 'primary.main', borderBottom: '1px solid #eee' }}>
+                Datos Técnicos e Identificación
               </Typography>
               
-              <Grid container spacing="0.75rem">
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', mb: '0.5rem' }}>
-                    <DirectionsCarIcon color="action" fontSize="small" />
-                    <Typography variant="body2" color="text.secondary">Marca/Modelo:</Typography>
-                  </Box>
-                  <Typography variant="body1" fontWeight="medium">
-                    {vehiculo.marca} {vehiculo.modelo}
-                  </Typography>
+              <Grid container spacing="1rem">
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Nº Chasis (VIN)</Typography>
+                  <Typography variant="body1" fontWeight="medium">{vehiculo.numero_chasis || 'No registrado'}</Typography>
                 </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', mb: '0.5rem' }}>
-                    <CalendarTodayIcon color="action" fontSize="small" />
-                    <Typography variant="body2" color="text.secondary">Año:</Typography>
-                  </Box>
-                  <Typography variant="body1" fontWeight="medium">
-                    {vehiculo.anio}
-                  </Typography>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Nº Motor</Typography>
+                  <Typography variant="body1" fontWeight="medium">{vehiculo.numero_motor || 'No registrado'}</Typography>
                 </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', mb: '0.5rem' }}>
-                    <SpeedIcon color="action" fontSize="small" />
-                    <Typography variant="body2" color="text.secondary">Kilometraje:</Typography>
-                  </Box>
-                  <Typography variant="body1" fontWeight="medium">
-                    {vehiculo.kilometraje_actual.toLocaleString()} km
-                  </Typography>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Marca / Modelo</Typography>
+                  <Typography variant="body1">{vehiculo.marca} {vehiculo.modelo}</Typography>
                 </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', mb: '0.5rem' }}>
-                    <LocationOnIcon color="action" fontSize="small" />
-                    <Typography variant="body2" color="text.secondary">Color:</Typography>
-                  </Box>
-                  <Typography variant="body1" fontWeight="medium">
-                    {vehiculo.color}
-                  </Typography>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Año / Origen</Typography>
+                  <Typography variant="body1">{vehiculo.anio} - {vehiculo.origen || 'N/A'}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Tipo / Color</Typography>
+                  <Typography variant="body1">{vehiculo.tipo} - {vehiculo.color}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Motor / Capacidad</Typography>
+                  <Typography variant="body1">{vehiculo.cilindrada ? `${vehiculo.cilindrada} cc` : 'N/A'} / {vehiculo.ocupantes} Pas.</Typography>
                 </Grid>
               </Grid>
             </Grid>
             
-            {/* Columna derecha - Estados y unidad */}
+            {/* Columna 2: Estado y Logística */}
             <Grid item xs={12} md={6}>
-              <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold' }}>
-                Estado y Ubicación
+              <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold', color: 'primary.main', borderBottom: '1px solid #eee' }}>
+                Ubicación y Estado Actual
               </Typography>
               
-              <Grid container spacing="0.75rem">
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: '0.5rem' }}>
-                    Estado Operativo:
-                  </Typography>
-                  <EstadoBadge estado={vehiculo.estado_operativo} />
+              <Grid container spacing="1rem">
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Estado Operativo</Typography>
+                  <Box mt={0.5}><EstadoBadge estado={vehiculo.estado_operativo} /></Box>
                 </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: '0.5rem' }}>
-                    Estado General:
-                  </Typography>
-                  <EstadoBadge estado={vehiculo.estado} />
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Condición Física</Typography>
+                  <Typography variant="body1" fontWeight="medium">{vehiculo.estado}</Typography>
                 </Grid>
-                
                 <Grid item xs={12}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: '0.5rem' }}>
-                    Unidad Asignada:
+                  <Typography variant="caption" color="text.secondary">Ubicación (Distrito - Unidad)</Typography>
+                  <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <LocationOnIcon fontSize="small" color="action" />
+                    {vehiculo.distrito} - {vehiculo.unidad ? vehiculo.unidad.nombre : 'Sin Unidad'}
                   </Typography>
-                  {vehiculo.unidad ? (
-                    <Chip
-                      label={`${vehiculo.unidad.sigla} - ${vehiculo.unidad.nombre}`}
-                      variant="outlined"
-                      sx={{ fontWeight: 'medium' }}
-                    />
-                  ) : (
-                    <Typography variant="body2" color="text.secondary">
-                      Sin asignar
+                  {vehiculo.destino && (
+                    <Typography variant="body2" color="text.secondary" ml={3}>
+                      Destino: {vehiculo.destino}
                     </Typography>
                   )}
                 </Grid>
-                
-                {vehiculo.fecha_adquisicion && (
-                  <Grid item xs={12}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: '0.5rem' }}>
-                      Fecha de Adquisición:
-                    </Typography>
-                    <Typography variant="body1">
-                      {new Date(vehiculo.fecha_adquisicion).toLocaleDateString()}
-                    </Typography>
-                  </Grid>
-                )}
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Kilometraje Actual</Typography>
+                  <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <SpeedIcon fontSize="small" color="action" />
+                    {vehiculo.kilometraje_actual?.toLocaleString()} km
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Fuente Recepción</Typography>
+                  <Typography variant="body1">{vehiculo.fuente_recepcion || 'Compra Regular'}</Typography>
+                </Grid>
               </Grid>
             </Grid>
-            
+
             {/* Observaciones */}
             {vehiculo.observaciones && (
               <Grid item xs={12}>
-                <Divider sx={{ my: '1rem' }} />
-                <Typography variant="body2" color="text.secondary" sx={{ mb: '0.5rem' }}>
-                  Observaciones:
-                </Typography>
-                <Paper variant="outlined" sx={{ p: '1rem', bgcolor: 'action.hover' }}>
-                  <Typography variant="body1">
-                    {vehiculo.observaciones}
-                  </Typography>
+                <Divider sx={{ my: '0.5rem' }} />
+                <Typography variant="caption" color="text.secondary">Observaciones</Typography>
+                <Paper variant="outlined" sx={{ p: '0.75rem', bgcolor: 'action.hover', mt: '0.25rem' }}>
+                  <Typography variant="body2">{vehiculo.observaciones}</Typography>
                 </Paper>
               </Grid>
             )}
-            
           </Grid>
         </Paper>
         
-        {/* Tabs para historial */}
+        {/* Historial (Tabs) - Se mantiene igual que antes pero limpio */}
         <Paper elevation={3} sx={{ borderRadius: '0.75rem', overflow: 'hidden' }}>
-          <Tabs
-            value={activeTab}
-            onChange={(e, newValue) => setActiveTab(newValue)}
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
-          >
+          <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tab label="Mantenimientos" icon={<BuildIcon />} iconPosition="start" />
             <Tab label="Asignaciones" icon={<AssignmentIcon />} iconPosition="start" />
             <Tab label="Documentos" icon={<DescriptionIcon />} iconPosition="start" />
           </Tabs>
           
-          {/* Contenido de las tabs */}
           <Box sx={{ p: '1.5rem' }}>
             {activeTab === 0 && (
               <Box>
-                <Typography variant="h6" sx={{ mb: '1rem' }}>
-                  Historial de Mantenimientos ({historial?.mantenimientos?.length || 0})
-                </Typography>
-                
+                <Typography variant="subtitle1" fontWeight="bold" mb={2}>Registros de Mantenimiento</Typography>
                 {historial?.mantenimientos?.length > 0 ? (
-                  <List>
-                    {historial.mantenimientos.map((mantenimiento, index) => (
-                      <ListItem key={index} divider={index < historial.mantenimientos.length - 1}>
-                        <ListItemIcon>
-                          <BuildIcon color="action" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={mantenimiento.tipo}
-                          secondary={`${mantenimiento.descripcion} - ${new Date(mantenimiento.fecha).toLocaleDateString()}`}
-                        />
-                        <Chip 
-                          label={mantenimiento.estado_mantenimiento} 
-                          size="small" 
-                          color={mantenimiento.estado_mantenimiento === 'finalizado' ? 'success' : 'warning'}
+                  <List dense>
+                    {historial.mantenimientos.map((m, i) => (
+                      <ListItem key={i} divider>
+                        <ListItemIcon><BuildIcon color="primary" /></ListItemIcon>
+                        <ListItemText 
+                          primary={`${m.tipo} - ${new Date(m.fecha).toLocaleDateString()}`}
+                          secondary={`${m.descripcion} (${m.estado_mantenimiento})`}
                         />
                       </ListItem>
                     ))}
                   </List>
-                ) : (
-                  <Alert severity="info">
-                    No se encontraron registros de mantenimiento para este vehículo.
-                  </Alert>
-                )}
+                ) : <Alert severity="info">No hay mantenimientos registrados.</Alert>}
               </Box>
             )}
             
             {activeTab === 1 && (
               <Box>
-                <Typography variant="h6" sx={{ mb: '1rem' }}>
-                  Historial de Asignaciones ({historial?.asignaciones?.length || 0})
-                </Typography>
-                
+                <Typography variant="subtitle1" fontWeight="bold" mb={2}>Historial de Asignaciones</Typography>
                 {historial?.asignaciones?.length > 0 ? (
-                  <List>
-                    {historial.asignaciones.map((asignacion, index) => (
-                      <ListItem key={index} divider={index < historial.asignaciones.length - 1}>
-                        <ListItemIcon>
-                          <AssignmentIcon color="action" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={asignacion.destino || 'Sin destino especificado'}
-                          secondary={`${new Date(asignacion.fecha_asignacion).toLocaleDateString()} - Conductor: ${asignacion.conductor?.nombre_completo || 'N/A'}`}
+                  <List dense>
+                    {historial.asignaciones.map((a, i) => (
+                      <ListItem key={i} divider>
+                        <ListItemIcon><AssignmentIcon color="primary" /></ListItemIcon>
+                        <ListItemText 
+                          primary={a.destino}
+                          secondary={`Asignado: ${new Date(a.fecha_asignacion).toLocaleDateString()} - Conductor: ${a.conductor?.nombre_completo || 'N/A'}`}
                         />
                       </ListItem>
                     ))}
                   </List>
-                ) : (
-                  <Alert severity="info">
-                    No se encontraron asignaciones para este vehículo.
-                  </Alert>
-                )}
+                ) : <Alert severity="info">No hay asignaciones registradas.</Alert>}
               </Box>
             )}
             
             {activeTab === 2 && (
               <Box>
-                <Typography variant="h6" sx={{ mb: '1rem' }}>
-                  Documentos Adjuntos ({historial?.documentos?.length || 0})
-                </Typography>
-                
+                <Typography variant="subtitle1" fontWeight="bold" mb={2}>Documentación Digital</Typography>
                 {historial?.documentos?.length > 0 ? (
-                  <Grid container spacing="1rem">
-                    {historial.documentos.map((documento, index) => (
-                      <Grid item xs={12} sm={6} md={4} key={index}>
-                        <Paper variant="outlined" sx={{ p: '1rem', borderRadius: '0.5rem' }}>
-                          <DescriptionIcon sx={{ fontSize: '2rem', color: 'primary.main', mb: '0.5rem' }} />
-                          <Typography variant="body1" fontWeight="medium">
-                            {documento.tipo_documento}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {new Date(documento.fecha_subida).toLocaleDateString()}
-                          </Typography>
-                          <Button
-                            size="small"
-                            href={documento.archivo_url}
-                            target="_blank"
-                            sx={{ mt: '0.5rem' }}
-                          >
-                            Ver documento
-                          </Button>
+                  <Grid container spacing={2}>
+                    {historial.documentos.map((d, i) => (
+                      <Grid item xs={12} sm={6} md={4} key={i}>
+                        <Paper variant="outlined" sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <DescriptionIcon color="error" fontSize="large" />
+                          <Box>
+                            <Typography variant="body2" fontWeight="bold">{d.tipo_documento}</Typography>
+                            <Typography variant="caption" display="block">{new Date(d.fecha_subida).toLocaleDateString()}</Typography>
+                            <Button size="small" href={d.archivo_url} target="_blank">Ver Archivo</Button>
+                          </Box>
                         </Paper>
                       </Grid>
                     ))}
                   </Grid>
-                ) : (
-                  <Alert severity="info">
-                    No se encontraron documentos adjuntos para este vehículo.
-                  </Alert>
-                )}
+                ) : <Alert severity="info">No hay documentos adjuntos.</Alert>}
               </Box>
             )}
           </Box>
         </Paper>
-        
       </Box>
     </Layout>
   );
