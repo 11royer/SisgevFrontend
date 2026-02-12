@@ -135,6 +135,10 @@ const ViewVehiculo = () => {
                   <Typography variant="caption" color="text.secondary">Motor / Capacidad</Typography>
                   <Typography variant="body1">{vehiculo.cilindrada ? `${vehiculo.cilindrada} cc` : 'N/A'} / {vehiculo.ocupantes} Pas.</Typography>
                 </Grid>
+                <Grid item xs={12} md={4}>
+                  <Typography variant="caption" color="text.secondary">Clasificación</Typography>
+                  <Typography variant="body1">{vehiculo.clasificacion?.nombre || "Sin clasificación"}</Typography>
+                </Grid>
               </Grid>
             </Grid>
             

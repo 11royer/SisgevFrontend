@@ -132,8 +132,8 @@ const CreateVehiculo = () => {
         {/* Nota informativa */}
         <Alert severity="info" sx={{ mb: '1.5rem', borderRadius: '0.5rem' }}>
           <Typography variant="body2">
-            Complete todos los campos obligatorios (*) para registrar el vehículo 
-            en la flota institucional. La placa debe ser única en el sistema.
+            Complete todos los campos obligatorios (*) para registrar el vehículo.
+            La placa, chasis y motor deben ser únicas en el sistema.
           </Typography>
         </Alert>
 

@@ -12,53 +12,57 @@ import {
   Select,
   Alert,
   CircularProgress,
-  Divider,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
+import ClasificacionService from "../../services/ClasificacionService";
 
 const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
-  // 1. Estado actualizado con los nuevos atributos del Backend
+
   const [formData, setFormData] = useState({
-    // Identificación
+    // IDENTIFICACIÓN
     placa: vehiculo?.placa || '',
-    sigla: vehiculo?.sigla || '',               // NUEVO
-    numero_chasis: vehiculo?.numero_chasis || '', // NUEVO
-    numero_motor: vehiculo?.numero_motor || '',   // NUEVO
-    
-    // Datos Técnicos
+    sigla: vehiculo?.sigla || '',
+    numero_chasis: vehiculo?.numero_chasis || '',
+    numero_motor: vehiculo?.numero_motor || '',
+    clasificacion_id: vehiculo?.clasificacion_id || '',
+
+    // DATOS TÉCNICOS
     marca: vehiculo?.marca || '',
     modelo: vehiculo?.modelo || '',
     anio: vehiculo?.anio || new Date().getFullYear(),
     color: vehiculo?.color || '',
     tipo: vehiculo?.tipo || '',
-    origen: vehiculo?.origen || '',             // NUEVO
-    cilindrada: vehiculo?.cilindrada || '',     // NUEVO
-    ocupantes: vehiculo?.ocupantes || 5,        // NUEVO
+    origen: vehiculo?.origen || '',
+    cilindrada: vehiculo?.cilindrada || '',
+    ocupantes: vehiculo?.ocupantes || 5,
 
-    // Estado
-    estado: vehiculo?.estado || 'Bueno',        // Actualizado default
+    // ESTADO
+    estado: vehiculo?.estado || 'Bueno',
     estado_operativo: vehiculo?.estado_operativo || 'Operativo',
     en_servicio: vehiculo?.en_servicio ?? true,
     kilometraje_actual: vehiculo?.kilometraje_actual || 0,
 
-    // Ubicación y Admin
+    // UBICACIÓN
     unidad_id: vehiculo?.unidad_id || '',
-    distrito: vehiculo?.distrito || 'Potosí',   // NUEVO
-    destino: vehiculo?.destino || '',           // NUEVO
+    distrito: vehiculo?.distrito || 'Potosí',
+    destino: vehiculo?.destino || '',
     fecha_adquisicion: vehiculo?.fecha_adquisicion || '',
-    fuente_recepcion: vehiculo?.fuente_recepcion || '', // NUEVO
+    fuente_recepcion: vehiculo?.fuente_recepcion || '',
     observaciones: vehiculo?.observaciones || '',
   });
 
   const [unidades, setUnidades] = useState([]);
   const [cargandoUnidades, setCargandoUnidades] = useState(false);
 
+  const [clasificaciones, setClasificaciones] = useState([]);
+  const [cargandoClasificaciones, setCargandoClasificaciones] = useState(false);
+
+  // Cargar Unidades
   useEffect(() => {
     const cargarUnidades = async () => {
       try {
         setCargandoUnidades(true);
-        // Simulación temporal (reemplazar con servicio real)
         setUnidades([
           { id: 1, nombre: 'Comando Departamental de Potosí', sigla: 'CDP' },
           { id: 2, nombre: 'EPI D-11 Achachicala', sigla: 'EPI D-11' },
@@ -70,6 +74,23 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
       }
     };
     cargarUnidades();
+  }, []);
+
+  // Cargar Clasificaciones
+  useEffect(() => {
+    const cargarClasificaciones = async () => {
+      try {
+        setCargandoClasificaciones(true);
+        const data = await ClasificacionService.getAll();
+        setClasificaciones(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Error cargando clasificaciones:', error);
+        setClasificaciones([]);
+      } finally {
+        setCargandoClasificaciones(false);
+      }
+    };
+    cargarClasificaciones();
   }, []);
 
   const handleChange = (e) => {
@@ -85,16 +106,15 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
     onSubmit(formData);
   };
 
-  // Listas estáticas
   const tiposVehiculo = ['Sedán', 'Camioneta', 'Patrullero', 'Motocicleta', 'Bus', 'Ambulancia', 'Camión', 'Vagoneta', 'Otro'];
   const colores = ['Blanco', 'Negro', 'Gris', 'Plateado', 'Azul', 'Rojo', 'Verde', 'Amarillo', 'Naranja', 'Verde Olivo'];
   const distritos = ['Potosí', 'Uyuni', 'Tupiza', 'Villazón', 'Llallagua', 'Uncía', 'Cotagaita'];
   const estadosFisicos = ['Bueno', 'Regular', 'Deteriorado', 'Fuera de Uso'];
 
   return (
-    <Paper 
-      elevation={3} 
-      sx={{ 
+    <Paper
+      elevation={3}
+      sx={{
         p: { xs: '1rem', md: '2rem' },
         borderRadius: '0.75rem',
         width: '100%',
@@ -109,9 +129,9 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
       </Alert>
 
       <form onSubmit={handleSubmit}>
-        <Grid container spacing="1.5rem">
-          
-          {/* --- SECCIÓN 1: IDENTIFICACIÓN POLICIAL (CRÍTICO) --- */}
+        <Grid container spacing={3}>
+
+          {/* IDENTIFICACIÓN */}
           <Grid item xs={12}>
             <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'text.secondary', borderBottom: '1px solid #eee', pb: '0.5rem' }}>
               IDENTIFICACIÓN OFICIAL
@@ -119,35 +139,44 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth label="Placa *" name="placa"
-              value={formData.placa} onChange={handleChange}
-              required size="small"
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth label="Sigla Policial" name="sigla"
-              value={formData.sigla} onChange={handleChange}
-              size="small" placeholder="Ej: M-105"
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth label="Nº Chasis (VIN) *" name="numero_chasis"
-              value={formData.numero_chasis} onChange={handleChange}
-              required size="small"
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth label="Nº Motor *" name="numero_motor"
-              value={formData.numero_motor} onChange={handleChange}
-              required size="small"
-            />
+            <TextField fullWidth label="Placa *" name="placa" value={formData.placa} onChange={handleChange} required size="small" />
           </Grid>
 
-          {/* --- SECCIÓN 2: CARACTERÍSTICAS TÉCNICAS --- */}
+          <Grid item xs={12} md={3}>
+            <TextField fullWidth label="Sigla Policial" name="sigla" value={formData.sigla} onChange={handleChange} size="small" />
+          </Grid>
+
+          <Grid item xs={12} md={3}>
+            <TextField fullWidth label="Nº Chasis (VIN) *" name="numero_chasis" value={formData.numero_chasis} onChange={handleChange} required size="small" />
+          </Grid>
+
+          <Grid item xs={12} md={3}>
+            <TextField fullWidth label="Nº Motor *" name="numero_motor" value={formData.numero_motor} onChange={handleChange} required size="small" />
+          </Grid>
+
+          <Grid item xs={12} md={3}>
+            <FormControl fullWidth size="small" required>
+              <InputLabel>Clasificación</InputLabel>
+              <Select
+                name="clasificacion_id"
+                value={formData.clasificacion_id || ""}
+                onChange={handleChange}
+                label="Clasificación"
+                disabled={cargandoClasificaciones}
+              >
+                <MenuItem value="">
+                  <em>Seleccionar</em>
+                </MenuItem>
+                {clasificaciones.map((c) => (
+                  <MenuItem key={c.id} value={c.id}>
+                    {c.nombre}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* DATOS TÉCNICOS */}
           <Grid item xs={12}>
             <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'text.secondary', borderBottom: '1px solid #eee', pb: '0.5rem', mt: '1rem' }}>
               DATOS TÉCNICOS
@@ -155,39 +184,23 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth label="Marca *" name="marca"
-              value={formData.marca} onChange={handleChange}
-              required size="small"
-            />
+            <TextField fullWidth label="Marca *" name="marca" value={formData.marca} onChange={handleChange} required size="small" />
           </Grid>
+
           <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth label="Modelo *" name="modelo"
-              value={formData.modelo} onChange={handleChange}
-              required size="small"
-            />
+            <TextField fullWidth label="Modelo *" name="modelo" value={formData.modelo} onChange={handleChange} required size="small" />
           </Grid>
+
           <Grid item xs={12} md={2}>
-            <TextField
-              fullWidth label="Año *" name="anio" type="number"
-              value={formData.anio} onChange={handleChange}
-              required size="small"
-            />
+            <TextField fullWidth label="Año *" name="anio" type="number" value={formData.anio} onChange={handleChange} required size="small" />
           </Grid>
+
           <Grid item xs={12} md={2}>
-            <TextField
-              fullWidth label="Cilindrada (cc)" name="cilindrada" type="number"
-              value={formData.cilindrada} onChange={handleChange}
-              size="small"
-            />
+            <TextField fullWidth label="Cilindrada (cc)" name="cilindrada" type="number" value={formData.cilindrada} onChange={handleChange} size="small" />
           </Grid>
+
           <Grid item xs={12} md={2}>
-            <TextField
-              fullWidth label="Ocupantes" name="ocupantes" type="number"
-              value={formData.ocupantes} onChange={handleChange}
-              size="small"
-            />
+            <TextField fullWidth label="Ocupantes" name="ocupantes" type="number" value={formData.ocupantes} onChange={handleChange} size="small" />
           </Grid>
 
           <Grid item xs={12} md={3}>
@@ -198,6 +211,7 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
               </Select>
             </FormControl>
           </Grid>
+
           <Grid item xs={12} md={3}>
             <FormControl fullWidth size="small" required>
               <InputLabel>Color</InputLabel>
@@ -206,22 +220,16 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
               </Select>
             </FormControl>
           </Grid>
+
           <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth label="País de Origen" name="origen"
-              value={formData.origen} onChange={handleChange}
-              size="small"
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth label="Kilometraje Actual *" name="kilometraje_actual" type="number"
-              value={formData.kilometraje_actual} onChange={handleChange}
-              required size="small"
-            />
+            <TextField fullWidth label="País de Origen" name="origen" value={formData.origen} onChange={handleChange} size="small" />
           </Grid>
 
-          {/* --- SECCIÓN 3: ESTADO Y LOGÍSTICA --- */}
+          <Grid item xs={12} md={3}>
+            <TextField fullWidth label="Kilometraje Actual *" name="kilometraje_actual" type="number" value={formData.kilometraje_actual} onChange={handleChange} required size="small" />
+          </Grid>
+
+          {/* UBICACIÓN Y ESTADO */}
           <Grid item xs={12}>
             <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'text.secondary', borderBottom: '1px solid #eee', pb: '0.5rem', mt: '1rem' }}>
               UBICACIÓN Y ESTADO
@@ -236,13 +244,11 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
               </Select>
             </FormControl>
           </Grid>
+
           <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth label="Destino Operativo" name="destino"
-              value={formData.destino} onChange={handleChange}
-              size="small" placeholder="Ej: Radio Patrullas 110"
-            />
+            <TextField fullWidth label="Destino Operativo" name="destino" value={formData.destino} onChange={handleChange} size="small" />
           </Grid>
+
           <Grid item xs={12} md={6}>
             <FormControl fullWidth size="small">
               <InputLabel>Unidad Institucional</InputLabel>
@@ -261,6 +267,7 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
               </Select>
             </FormControl>
           </Grid>
+
           <Grid item xs={12} md={3}>
             <FormControl fullWidth size="small" required>
               <InputLabel>Estado Operativo</InputLabel>
@@ -272,38 +279,52 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
               </Select>
             </FormControl>
           </Grid>
+
           <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth label="Fecha Adquisición" name="fecha_adquisicion" type="date"
-              value={formData.fecha_adquisicion} onChange={handleChange}
-              size="small" InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth label="Fuente Recepción" name="fuente_recepcion"
-              value={formData.fuente_recepcion} onChange={handleChange}
-              size="small" placeholder="Ej: DIRCABI, Donación"
+            <TextField fullWidth label="Fecha Adquisición" name="fecha_adquisicion" type="date"
+              value={formData.fecha_adquisicion}
+              onChange={handleChange}
+              size="small"
+              InputLabelProps={{ shrink: true }}
             />
           </Grid>
 
-          {/* Observaciones */}
+          <Grid item xs={12} md={3}>
+            <TextField fullWidth label="Fuente Recepción" name="fuente_recepcion"
+              value={formData.fuente_recepcion}
+              onChange={handleChange}
+              size="small"
+            />
+          </Grid>
+
           <Grid item xs={12}>
-            <TextField
-              fullWidth label="Observaciones Generales" name="observaciones"
-              value={formData.observaciones} onChange={handleChange}
-              multiline rows={2} size="small"
+            <TextField fullWidth label="Observaciones Generales"
+              name="observaciones"
+              value={formData.observaciones}
+              onChange={handleChange}
+              multiline rows={2}
+              size="small"
             />
           </Grid>
 
         </Grid>
 
-        {/* Botones */}
         <Box sx={{ mt: '2rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-          <Button variant="outlined" color="error" onClick={onCancel} startIcon={<CancelIcon />} disabled={loading} sx={{ borderRadius: '0.5rem' }}>
+          <Button variant="outlined" color="error" onClick={onCancel}
+            startIcon={<CancelIcon />}
+            disabled={loading}
+            sx={{ borderRadius: '0.5rem' }}
+          >
             Cancelar
           </Button>
-          <Button type="submit" variant="contained" color="primary" startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />} disabled={loading} sx={{ borderRadius: '0.5rem' }}>
+
+          <Button type="submit"
+            variant="contained"
+            color="primary"
+            startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
+            disabled={loading}
+            sx={{ borderRadius: '0.5rem' }}
+          >
             {loading ? 'Guardando...' : 'Guardar Vehículo'}
           </Button>
         </Box>
