@@ -14,6 +14,14 @@ import EditVehiculo from './pages/vehiculos/EditVehiculo';
 import ViewVehiculo from './pages/vehiculos/ViewVehiculo';
 import DocumentosVehiculo from './pages/vehiculos/DocumentosVehiculo';
 
+// CONDUCTORES Y ASIGNACIONES ==========
+import ConductoresPage from './pages/conductores';
+import CreateConductor from './pages/conductores/CreateConductor';
+import EditConductor from './pages/conductores/EditConductor';
+import ViewConductor from './pages/conductores/ViewConductor';
+import AsignacionesPage from './pages/asignaciones';
+import CreateAsignacion from './pages/asignaciones/CreateAsignacion';
+import ViewAsignacion from './pages/asignaciones/ViewAsignacion';
 import PrivateRoute from './routes/PrivateRoute';
 
 export default function AppRoutes() {
@@ -38,6 +46,18 @@ export default function AppRoutes() {
       <Route path="/vehiculos/editar/:id" element={<PrivateRoute><EditVehiculo /></PrivateRoute>} />
       <Route path="/vehiculos/:id" element={<PrivateRoute><ViewVehiculo /></PrivateRoute>} />
       <Route path="/vehiculos/:id/documentos" element={<PrivateRoute><DocumentosVehiculo /></PrivateRoute>} />
+      
+      {/* CONDUCTORES */}
+      <Route path="/conductores" element={<PrivateRoute><ConductoresPage /></PrivateRoute>} />
+      <Route path="/conductores/crear" element={<PrivateRoute><CreateConductor /></PrivateRoute>} />
+      <Route path="/conductores/editar/:id" element={<PrivateRoute><EditConductor /></PrivateRoute>} />
+      <Route path="/conductores/:id" element={<PrivateRoute><ViewConductor /></PrivateRoute>} />
+      <Route path="/conductores/:id/historial" element={<PrivateRoute><ViewConductor /></PrivateRoute>} />
+
+      {/* ASIGNACIONES */}
+      <Route path="/asignaciones" element={<PrivateRoute><AsignacionesPage /></PrivateRoute>} />
+      <Route path="/asignaciones/crear" element={<PrivateRoute><CreateAsignacion /></PrivateRoute>} />
+      <Route path="/asignaciones/:id" element={<PrivateRoute><ViewAsignacion /></PrivateRoute>} />
       
       {/* Ruta por defecto */}
       <Route path="*" element={<Navigate to="/" replace />} />
