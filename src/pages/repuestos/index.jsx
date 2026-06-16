@@ -1,4 +1,3 @@
-// PÁGINA PRINCIPAL DE REPUESTOS
 import React, { useState, useEffect } from 'react';
 import {
     Box,
@@ -16,7 +15,6 @@ import {
     MenuItem,
     IconButton,
     Tooltip,
-    Chip,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
@@ -65,6 +63,17 @@ const RepuestosPage = () => {
     const [updatingStock, setUpdatingStock] = useState(false);
     
     const puedeEscribir = ['Administrador', 'Técnico'].includes(currentUser?.rol?.nombre);
+
+    // CALCULAR STOCK BAJO LOCALMENTE (para asegurar que se muestre)
+    const stockBajoLocal = repuestos.filter(r => {
+        // Verificar que el repuesto es activo y tiene stock bajo
+        const cantidadActual = r.cantidad_actual || 0;
+        const cantidadMinima = r.cantidad_minima || 0;
+        return r.activo !== false && cantidadActual <= cantidadMinima;
+    }).length;
+
+    // Usar el valor del hook o el calculado localmente (el que sea mayor o más preciso)
+    const stockBajoFinal = stockBajoCount > 0 ? stockBajoCount : stockBajoLocal;
 
     useEffect(() => {
         setFiltrosLocales(prev => ({
@@ -179,54 +188,57 @@ const RepuestosPage = () => {
                     </Box>
                 </Box>
 
-                {/* Tarjetas de estadísticas */}
-                {estadisticas && (
-                    <Grid container spacing={2} sx={{ mb: '1.5rem' }}>
-                        <Grid item xs={6} sm={3}>
-                            <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
-                                <Typography variant="h5" color="primary.main" fontWeight="bold">
-                                    {estadisticas.total_repuestos || 0}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">Total Repuestos</Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={6} sm={3}>
-                            <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
-                                <Typography variant="h5" color="success.main" fontWeight="bold">
-                                    {estadisticas.activos || 0}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">Activos</Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={6} sm={3}>
-                            <Paper 
-                                sx={{ 
-                                    p: '1rem', 
-                                    textAlign: 'center', 
-                                    borderRadius: '0.75rem',
-                                    bgcolor: stockBajoCount > 0 ? 'error.light' : 'inherit',
-                                    color: stockBajoCount > 0 ? 'white' : 'inherit'
-                                }}
-                            >
-                                <Typography variant="h5" fontWeight="bold">
-                                    {stockBajoCount || 0}
-                                </Typography>
-                                <Typography variant="caption">Stock Bajo</Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={6} sm={3}>
-                            <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
-                                <Typography variant="h5" color="info.main" fontWeight="bold">
-                                    Bs. {estadisticas.valor_inventario?.toLocaleString() || 0}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">Valor Inventario</Typography>
-                            </Paper>
-                        </Grid>
+                {/* Tarjetas de estadísticas - USAR stockBajoFinal */}
+                <Grid container spacing={2} sx={{ mb: '1.5rem' }}>
+                    <Grid item xs={6} sm={3}>
+                        <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
+                            <Typography variant="h5" color="primary.main" fontWeight="bold">
+                                {estadisticas?.total_repuestos || pagination?.total || repuestos.length || 0}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">Total Repuestos</Typography>
+                        </Paper>
                     </Grid>
-                )}
+                    <Grid item xs={6} sm={3}>
+                        <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
+                            <Typography variant="h5" color="success.main" fontWeight="bold">
+                                {estadisticas?.activos || repuestos.filter(r => r.activo).length || 0}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">Activos</Typography>
+                        </Paper>
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                        <Paper 
+                            sx={{ 
+                                p: '1rem', 
+                                textAlign: 'center', 
+                                borderRadius: '0.75rem',
+                                bgcolor: stockBajoFinal > 0 ? 'warning.light' : 'inherit',
+                            }}
+                        >
+                            <Typography 
+                                variant="h5" 
+                                fontWeight="bold" 
+                                color={stockBajoFinal > 0 ? 'warning.dark' : 'text.primary'}
+                            >
+                                {stockBajoFinal || 0}
+                            </Typography>
+                            <Typography variant="caption" color={stockBajoFinal > 0 ? 'warning.dark' : 'text.secondary'}>
+                                Stock Bajo
+                            </Typography>
+                        </Paper>
+                    </Grid>
+                    <Grid item xs={6} sm={3}>
+                        <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
+                            <Typography variant="h5" color="info.main" fontWeight="bold">
+                                Bs. {estadisticas?.valor_inventario?.toLocaleString() || 0}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">Valor Inventario</Typography>
+                        </Paper>
+                    </Grid>
+                </Grid>
 
-                {/* Alertas de stock bajo */}
-                {stockBajoCount > 0 && (
+                {/* Alertas de stock bajo - USAR stockBajoFinal */}
+                {stockBajoFinal > 0 && (
                     <Alert 
                         severity="warning" 
                         icon={<WarningIcon />}
@@ -235,13 +247,16 @@ const RepuestosPage = () => {
                             <Button 
                                 color="inherit" 
                                 size="small" 
-                                onClick={() => handleFiltroChange('stock_bajo', true)}
+                                onClick={() => {
+                                    handleFiltroChange('stock_bajo', true);
+                                    handleAplicarFiltros();
+                                }}
                             >
                                 Ver
                             </Button>
                         }
                     >
-                        Hay {stockBajoCount} repuesto(s) con stock bajo o crítico. Revise el inventario.
+                        Hay {stockBajoFinal} repuesto(s) con stock bajo o crítico. Revise el inventario.
                     </Alert>
                 )}
 
@@ -264,7 +279,7 @@ const RepuestosPage = () => {
                 {/* Nota informativa */}
                 <Alert severity="info" sx={{ mb: '1.5rem', borderRadius: '0.5rem' }}>
                     <Typography variant="body2">
-                        Gestión de inventario de repuestos para mantenimientos. 
+                        📦 Gestión de inventario de repuestos para mantenimientos. 
                         El stock bajo se activa cuando la cantidad actual es menor o igual a la cantidad mínima.
                     </Typography>
                 </Alert>

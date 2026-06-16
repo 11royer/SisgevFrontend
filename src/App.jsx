@@ -33,6 +33,9 @@ import CreateRepuesto from './pages/repuestos/CreateRepuesto';
 import EditRepuesto from './pages/repuestos/EditRepuesto';
 import ViewRepuesto from './pages/repuestos/ViewRepuesto';
 
+// REPORTES
+import ReportesPage from './pages/reportes';
+
 import PrivateRoute from './routes/PrivateRoute';
 
 export default function AppRoutes() {
@@ -81,6 +84,9 @@ export default function AppRoutes() {
       <Route path="/repuestos/crear" element={<PrivateRoute><CreateRepuesto /></PrivateRoute>} />
       <Route path="/repuestos/editar/:id" element={<PrivateRoute><EditRepuesto /></PrivateRoute>} />
       <Route path="/repuestos/:id" element={<PrivateRoute><ViewRepuesto /></PrivateRoute>} />
+
+      {/* Reportes */}
+      <Route path="/reportes" element={<PrivateRoute><ReportesPage /></PrivateRoute>} />
 
       {/* Ruta por defecto */}
       <Route path="*" element={<Navigate to="/" replace />} />

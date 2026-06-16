@@ -30,10 +30,22 @@ export const useRepuestos = () => {
 
             const data = response.data.data || response.data;
             const meta = response.data.meta || {};
+            
+            // Calcular stock bajo localmente si no viene en meta
+            let stockCount = meta.stock_bajo_count || 0;
+            
+            // Si no vino en meta, calcular desde los datos
+            if (stockCount === 0 && Array.isArray(data) && data.length > 0) {
+                stockCount = data.filter(r => {
+                    const actual = r.cantidad_actual || 0;
+                    const minima = r.cantidad_minima || 0;
+                    return actual <= minima && r.activo !== false;
+                }).length;
+            }
 
             setRepuestos(Array.isArray(data) ? data : []);
             setEstadisticas(response.data.estadisticas || null);
-            setStockBajoCount(meta.stock_bajo_count || 0);
+            setStockBajoCount(stockCount);
             setPagination(prev => ({
                 ...prev,
                 total: meta.total || data.length || 0,
