@@ -1,10 +1,11 @@
-// src/pages/Login.jsx
 import React from 'react';
 import { Box, Paper, Typography, useTheme } from '@mui/material';
 import LoginForm from '../components/LoginForm';
-import ShieldIcon from '../icons/ShieldIcon';
 import useAuth from '../auth/UseAuth';
 import { useNavigate } from 'react-router-dom';
+
+// 1. Importación física del escudo optimizado en formato WebP desde tus assets
+import EscudoPolicia from '../assets/escudo.webp';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -60,9 +61,27 @@ export default function LoginPage() {
           textAlign: 'center'
         }}
       >
-        {/* LOGO PRINCIPAL */}
+        {/* LOGO PRINCIPAL: Reemplazado por la etiqueta de imagen optimizada */}
         <Box sx={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
-          <ShieldIcon size={90} color={theme.palette.primary.main} />
+          <Box
+            component="img"
+            src={EscudoPolicia}
+            alt="Escudo Institucional de la Policía Boliviana"
+            sx={{
+              width: '95px',
+              height: '120px',          // Un alto mayor que el ancho para crear el óvalo
+              borderRadius: '120px / 150px', // Radio elíptico (horizontal / vertical) estilo ovoide
+              objectFit: 'contain',     // Mantiene la proporción del escudo intacta dentro del óvalo
+              backgroundColor: 'rgba(0, 0, 0, 0.20)', // Fondo oscuro translúcido que acompaña tu tema elegante
+              padding: '8px',           // Espaciado interno protector
+    
+              filter: 'drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.35))',
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.05)'
+              }
+            }}
+        />
         </Box>
 
         {/* TÍTULO DEL SISTEMA */}
@@ -85,7 +104,7 @@ export default function LoginPage() {
             color: 'text.secondary' 
           }}
         >
-          Sistema de Gestión de la Flota Vehicular --- Policía Boliviana
+          Sistema de Gestión de la Flota Vehicular Policial
         </Typography>
 
         {/* CONTENEDOR DEL FORMULARIO */}

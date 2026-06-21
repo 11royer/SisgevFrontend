@@ -1,4 +1,3 @@
-// src/layout/Navbar.jsx
 import React from 'react';
 import {
   AppBar,
@@ -13,22 +12,38 @@ import MenuIcon from '@mui/icons-material/Menu';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import useAuth from '../auth/UseAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useThemeContext } from '../theme/ThemeContextRef';
+
+const titulosRutas = {
+  '/dashboard': 'Panel Principal',
+  '/perfil': 'Mi Perfil',
+  '/usuarios': 'Gestión de Usuarios',
+  '/roles': 'Seguridad y Roles',
+  '/bitacora': 'Bitácora de Sistema',
+  '/vehiculos': 'Control de Vehículos',
+  '/conductores': 'Registro de Conductores',
+  '/asignaciones': 'Asignación vehicular',
+  '/mantenimientos': 'Mantenimiento Vehicular',
+  '/repuestos': 'Inventario de Repuestos',
+  '/reportes': 'Reportes y Formularios',
+};
 
 export default function Navbar({ drawerWidth, handleDrawerToggle }) {
   const theme = useTheme();
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation(); // 3. Hook para escuchar el cambio de URL activa
   const { toggleColorMode } = useThemeContext();
 
-  // ============================================
   // MANEJADOR DE CIERRE DE SESIÓN
-  // ============================================
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
+  // 4. Determinar el título de la página actual dinámicamente
+  const tituloActual = titulosRutas[location.pathname] || 'SISGEV-P';
 
   return (
     <AppBar
@@ -51,7 +66,7 @@ export default function Navbar({ drawerWidth, handleDrawerToggle }) {
         borderBottom: `0.0625rem solid ${theme.palette.divider}`,
       }}
     >
-      <Toolbar>
+      <Toolbar sx={{ height: '100%' }}>
         {/* BOTÓN DE MENÚ PARA MÓVIL */}
         <IconButton
           color="inherit"
@@ -66,9 +81,9 @@ export default function Navbar({ drawerWidth, handleDrawerToggle }) {
           <MenuIcon />
         </IconButton>
 
-        {/* TÍTULO DE LA PÁGINA ACTUAL */}
-        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-          Dashboard
+        {/* 5. TÍTULO DE LA PÁGINA ACTUAL TOTALMENTE DINÁMICO */}
+        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
+          {tituloActual}
         </Typography>
 
         {/* BOTÓN PARA CAMBIAR MODO CLARO/OSCURO */}

@@ -156,7 +156,7 @@ const Dashboard = () => {
     
     return (
         <Layout>
-            <Box sx={{ width: '100%', p: { xs: '0.75rem', md: '1.5rem' } }}>
+            <Box sx={{ width: '100%', p: { xs: '0.5rem', md: '0.75rem' } }}>
                 <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2 }}>
                     Panel de Control
                 </Typography>

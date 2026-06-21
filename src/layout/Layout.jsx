@@ -1,16 +1,13 @@
-// src/layout/Layout.jsx
 import React, { useState } from 'react';
 import { Box, useTheme, Toolbar } from '@mui/material';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
-
-// ANCHO FIJO DEL SIDEBAR (240px en rem)
-const DRAWER_WIDTH = 240;
+// ANCHO FIJO DEL SIDEBAR (Mantienes tus 240px o la medida que configures)
+const DRAWER_WIDTH = 200;
 
 export default function Layout({ children }) {
   const theme = useTheme();
-  
   
   // ESTADO PARA CONTROLAR SIDEBAR EN MÓVIL
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -21,7 +18,7 @@ export default function Layout({ children }) {
 
   return (
     <Box sx={{ display: 'flex' }}>
-      {/* BARRA SUPERIOR */}
+      {/* BARRA SUPERIOR (Pasando el ancho correcto) */}
       <Navbar
         drawerWidth={DRAWER_WIDTH}
         handleDrawerToggle={handleDrawerToggle}
@@ -44,7 +41,7 @@ export default function Layout({ children }) {
           minHeight: '100vh',
           
           // ESPACIADO Y PADDING
-          padding: '2rem',
+          padding: { xs: '0.25rem', sm: '0.5rem', md: '0.75rem' },
           
           // RESPONSIVE: AJUSTAR ANCHO EN ESCRITORIO
           width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },

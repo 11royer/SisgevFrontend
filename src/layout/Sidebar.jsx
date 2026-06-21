@@ -1,4 +1,3 @@
-// src/layout/Sidebar.jsx
 import React from 'react';
 import {
   Box,
@@ -23,9 +22,9 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import SecurityIcon from '@mui/icons-material/Security';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import EscudoMiniatura from '../assets/escudo.webp';
 
-
-// CONFIGURACIÓN DE ITEMS DEL MENÚ
+// CONFIGURACIÓN DE ITEMS DEL MENÚ (Se mantiene intacto)
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
   { text: 'Mi Perfil', icon: <AccountCircleIcon />, path: '/perfil' },
@@ -45,28 +44,47 @@ export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle })
   const navigate = useNavigate();
   const location = useLocation();
 
+  // 1. Detectamos si el modo actual es oscuro (luna) o claro (sol)
+  const isDarkMode = theme.palette.mode === 'dark';
 
   // CONTENIDO PRINCIPAL DEL DRAWER
   const drawer = (
     <div>
-      {/* ENCABEZADO DEL SIDEBAR */}
+      {/* ENCABEZADO DEL SIDEBAR CON ESCUDO INCORPORADO */}
       <Toolbar sx={{
         minHeight: '4rem',
         borderBottom: `0.0625rem solid ${theme.palette.divider}`,
-        padding: '1rem 0'
+        padding: '1rem 0',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingLeft: '1.25rem' 
       }}>
+        {/* Componente de Imagen para el Escudo de la Policía */}
+        <Box
+          component="img"
+          src={EscudoMiniatura}
+          alt="Escudo Policía"
+          sx={{
+            height: '34px',
+            width: 'auto',
+            objectFit: 'contain',
+            filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.3))'
+          }}
+        />
         <Typography variant="h6" sx={{
-          marginLeft: '1.5rem',
-          fontWeight: 700,
+          marginLeft: '0.75rem', 
+          fontWeight: 800,
           color: theme.palette.primary.main,
-          fontSize: '1.125rem'
+          fontSize: '1.125rem',
+          letterSpacing: '0.5px'
         }}>
           SISGEV-P
         </Typography>
       </Toolbar>
 
       {/* LISTA DE ITEMS DEL MENÚ */}
-      <List>
+      <List sx={{ pt: '0.5rem' }}>
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
           
@@ -82,36 +100,49 @@ export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle })
                 }}
                 sx={{
                   // ESPACIADO Y MÁRGENES
-                  margin: '0 1rem',
+                  margin: '0 0.75rem',
                   marginBottom: '0.25rem',
                   borderRadius: '0.5rem',
+                  padding: '0.6rem 1rem',
                   
                   // COLOR SEGÚN ACTIVO/INACTIVO
                   backgroundColor: isActive
                     ? theme.palette.primary.dark
                     : 'transparent',
                   
-                  // EFECTO HOVER
+                  // EFECTO HOVER ADAPTADO POR MODO
                   '&:hover': {
                     backgroundColor: isActive
                       ? theme.palette.primary.dark
-                      : 'rgba(255, 255, 255, 0.08)',
+                      : isDarkMode 
+                        ? 'rgba(255, 255, 255, 0.05)' // Modo Oscuro: hover claro sutil
+                        : 'rgba(0, 0, 0, 0.04)',     // Modo Claro: hover oscuro sutil
                   }
                 }}
               >
-                {/* ICONO DEL ITEM */}
+                {/* ICONO DEL ITEM - Contraste Dinámico según Sol/Luna */}
                 <ListItemIcon sx={{
-                  color: isActive ? theme.palette.primary.light : theme.palette.text.secondary,
-                  minWidth: '2.5rem'
+                  color: isActive 
+                    ? theme.palette.primary.light 
+                    : isDarkMode 
+                      ? 'rgba(255, 255, 255, 0.6)'  // Modo Oscuro: Blanco traslúcido
+                      : 'rgba(0, 0, 0, 0.54)',      // Modo Claro: Gris oscuro/negro legible
+                  minWidth: '2.25rem'
                 }}>
                   {item.icon}
                 </ListItemIcon>
                 
-                {/* TEXTO DEL ITEM */}
+                {/* TEXTO DEL ITEM - Contraste Dinámico según Sol/Luna */}
                 <ListItemText 
                   primary={item.text} 
-                  sx={{
-                    color: isActive ? theme.palette.text.primary : theme.palette.text.secondary,
+                  primaryTypographyProps={{
+                    fontSize: '0.9rem',
+                    fontWeight: isActive ? 600 : 400,
+                    color: isActive 
+                      ? (isDarkMode ? '#ffffff' : theme.palette.primary.contrastText) 
+                      : isDarkMode 
+                        ? 'rgba(255, 255, 255, 0.75)' // Modo Oscuro: Texto blanco legible
+                        : 'rgba(0, 0, 0, 0.87)'       // Modo Claro: Texto oscuro de alto contraste
                   }}
                 />
               </ListItemButton>
