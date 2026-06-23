@@ -36,59 +36,75 @@ import ViewRepuesto from './pages/repuestos/ViewRepuesto';
 // REPORTES
 import ReportesPage from './pages/reportes';
 
+// FORMULARIOS D
+import FormularioEditor from './pages/formularios/FormularioEditor';
+import FormularioHistorial from './pages/formularios/FormularioHistorial';
+import FormularioView from './pages/formularios/FormularioView';
+
+// RUTAS PRIVADAS
 import PrivateRoute from './routes/PrivateRoute';
 
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Rutas públicas */}
+      {/* ===== RUTAS PÚBLICAS ===== */}
       <Route path="/login" element={<LoginPage />} />
       
-      {/* Rutas privadas - Dashboard y Perfil */}
+      {/* ===== RUTAS PRIVADAS - DASHBOARD Y PERFIL ===== */}
       <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
       <Route path="/perfil" element={<PrivateRoute><Perfil /></PrivateRoute>} />
       
-      {/* Administración */}
+      {/* ===== ADMINISTRACIÓN ===== */}
       <Route path="/usuarios" element={<PrivateRoute><Usuarios /></PrivateRoute>} />
       <Route path="/roles" element={<PrivateRoute><Roles /></PrivateRoute>} />
       <Route path="/bitacora" element={<PrivateRoute><Bitacora /></PrivateRoute>} />
       
-      {/* Vehículos */}
+      {/* ===== VEHÍCULOS ===== */}
       <Route path="/vehiculos" element={<PrivateRoute><VehiculosPage /></PrivateRoute>} />
       <Route path="/vehiculos/crear" element={<PrivateRoute><CreateVehiculo /></PrivateRoute>} />
       <Route path="/vehiculos/editar/:id" element={<PrivateRoute><EditVehiculo /></PrivateRoute>} />
       <Route path="/vehiculos/:id" element={<PrivateRoute><ViewVehiculo /></PrivateRoute>} />
       <Route path="/vehiculos/:id/documentos" element={<PrivateRoute><DocumentosVehiculo /></PrivateRoute>} />
       
-      {/* Conductores */}
+      {/* ===== CONDUCTORES ===== */}
       <Route path="/conductores" element={<PrivateRoute><ConductoresPage /></PrivateRoute>} />
       <Route path="/conductores/crear" element={<PrivateRoute><CreateConductor /></PrivateRoute>} />
       <Route path="/conductores/editar/:id" element={<PrivateRoute><EditConductor /></PrivateRoute>} />
       <Route path="/conductores/:id" element={<PrivateRoute><ViewConductor /></PrivateRoute>} />
       <Route path="/conductores/:id/historial" element={<PrivateRoute><ViewConductor /></PrivateRoute>} />
 
-      {/* Asignaciones */}
+      {/* ===== ASIGNACIONES ===== */}
       <Route path="/asignaciones" element={<PrivateRoute><AsignacionesPage /></PrivateRoute>} />
       <Route path="/asignaciones/crear" element={<PrivateRoute><CreateAsignacion /></PrivateRoute>} />
       <Route path="/asignaciones/:id" element={<PrivateRoute><ViewAsignacion /></PrivateRoute>} />
 
-      {/* Mantenimientos */}
+      {/* ===== MANTENIMIENTOS ===== */}
       <Route path="/mantenimientos" element={<PrivateRoute><MantenimientosPage /></PrivateRoute>} />
       <Route path="/mantenimientos/crear" element={<PrivateRoute><CreateMantenimiento /></PrivateRoute>} />
       <Route path="/mantenimientos/editar/:id" element={<PrivateRoute><EditMantenimiento /></PrivateRoute>} />
       <Route path="/mantenimientos/:id" element={<PrivateRoute><ViewMantenimiento /></PrivateRoute>} />
       
-      {/* Repuestos */}
+      {/* ===== REPUESTOS ===== */}
       <Route path="/repuestos" element={<PrivateRoute><RepuestosPage /></PrivateRoute>} />
       <Route path="/repuestos/crear" element={<PrivateRoute><CreateRepuesto /></PrivateRoute>} />
       <Route path="/repuestos/editar/:id" element={<PrivateRoute><EditRepuesto /></PrivateRoute>} />
       <Route path="/repuestos/:id" element={<PrivateRoute><ViewRepuesto /></PrivateRoute>} />
 
-      {/* Reportes */}
+      {/* ===== REPORTES ===== */}
       <Route path="/reportes" element={<PrivateRoute><ReportesPage /></PrivateRoute>} />
 
-      {/* Ruta por defecto */}
+      {/* === FORMULARIOS D======= */}
+      {/* Editor de formularios: /formularios/editar/:tipo/:vehiculoId */}
+      <Route path="/formularios/editar/:tipo/:vehiculoId" element={<PrivateRoute><FormularioEditor /></PrivateRoute>} />
+      
+      {/* Historial de formularios: /formularios/historial/:vehiculoId/:tipo */}
+      <Route path="/formularios/historial/:vehiculoId/:tipo" element={<PrivateRoute><FormularioHistorial /></PrivateRoute>} />
+      
+      {/* Ver detalle de formulario: /formularios/ver/:id */}
+      <Route path="/formularios/ver/:id" element={<PrivateRoute><FormularioView /></PrivateRoute>} />
+
+      {/* ===== RUTA POR DEFECTO ===== */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
