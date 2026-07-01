@@ -1,28 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import {
     Box,
-    Paper,
     Typography,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Chip,
+    Paper,
     Button,
-    IconButton,
     Alert,
     CircularProgress,
-    Tooltip,
+    TextField,
+    InputAdornment,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    Grid,
+    Chip,
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { useParams, useNavigate } from 'react-router-dom';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
 import Layout from '../../layout/Layout';
 import { formularioService } from '../../services/FormularioService';
 import { vehiculoService } from '../../services/VehiculoService';
+import FormularioHistorialItem from '../../components/formularios/FormularioHistorialItem';
 
 const FormularioHistorial = () => {
     const { vehiculoId, tipo } = useParams();
@@ -32,70 +32,83 @@ const FormularioHistorial = () => {
     const [vehiculo, setVehiculo] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [filtro, setFiltro] = useState('');
+    const [estadoFiltro, setEstadoFiltro] = useState('');
 
     useEffect(() => {
-        cargarHistorial();
-        cargarVehiculo();
+        cargarDatos();
     }, [vehiculoId, tipo]);
 
-    const cargarHistorial = async () => {
+    const cargarDatos = async () => {
         try {
             setLoading(true);
             setError(null);
-            
+
+            // Cargar vehículo
+            const vehiculoRes = await vehiculoService.getById(vehiculoId);
+            setVehiculo(vehiculoRes.data.data);
+
+            // Cargar historial
             const response = await formularioService.getHistorial(vehiculoId, tipo);
             setFormularios(response.data.data || []);
-            
         } catch (error) {
             console.error('Error cargando historial:', error);
-            setError('Error al cargar el historial de formularios');
+            setError('Error al cargar el historial');
         } finally {
             setLoading(false);
         }
     };
 
-    const cargarVehiculo = async () => {
-        try {
-            const response = await vehiculoService.getById(vehiculoId);
-            setVehiculo(response.data.data);
-        } catch (error) {
-            console.error('Error cargando vehículo:', error);
+    const handleVolver = () => {
+        if (tipo) {
+            navigate(`/formularios/editar/${tipo}/${vehiculoId}`);
+        } else {
+            navigate(`/formularios/${vehiculoId}`);
         }
     };
 
-    const handleVolver = () => {
-        navigate(`/formularios/editar/${tipo}/${vehiculoId}`);
-    };
-
     const handleVerDetalle = (id) => {
-        // Navegar a la vista detalle del formulario
         navigate(`/formularios/ver/${id}`);
     };
 
     const handleReutilizar = (formulario) => {
-        // Navegar al editor con los datos del formulario
-        navigate(`/formularios/editar/${tipo}/${vehiculoId}`, {
+        navigate(`/formularios/editar/${formulario.tipo}/${vehiculoId}`, {
             state: { datos: formulario.datos }
         });
     };
 
-    const getEstadoColor = (estado) => {
-        switch (estado) {
-            case 'finalizado': return 'success';
-            case 'borrador': return 'warning';
-            case 'archivado': return 'default';
-            default: return 'default';
+    const handleExportar = async (formulario) => {
+        try {
+            const response = await formularioService.exportar({
+                vehiculo_id: vehiculoId,
+                tipo: formulario.tipo,
+                datos: formulario.datos
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `FORM_${formulario.tipo}_${new Date().toISOString().slice(0, 10)}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error('Error exportando:', error);
+            setError('Error al exportar el formulario');
         }
     };
 
-    const getEstadoLabel = (estado) => {
-        switch (estado) {
-            case 'finalizado': return 'Finalizado';
-            case 'borrador': return 'Borrador';
-            case 'archivado': return 'Archivado';
-            default: return estado;
-        }
+    const handleLimpiarFiltros = () => {
+        setFiltro('');
+        setEstadoFiltro('');
     };
+
+    const formulariosFiltrados = formularios.filter(f => {
+        const matchTitulo = f.titulo?.toLowerCase().includes(filtro.toLowerCase()) ||
+                           f.tipo?.includes(filtro) ||
+                           f.id?.toString().includes(filtro);
+        const matchEstado = estadoFiltro === '' || f.estado === estadoFiltro;
+        return matchTitulo && matchEstado;
+    });
 
     if (loading) {
         return (
@@ -117,7 +130,7 @@ const FormularioHistorial = () => {
                     alignItems: 'center',
                     mb: 2,
                     flexWrap: 'wrap',
-                    gap: 1
+                    gap: 1,
                 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Button
@@ -126,9 +139,9 @@ const FormularioHistorial = () => {
                             onClick={handleVolver}
                             size="small"
                         >
-                            Volver al Editor
+                            Volver
                         </Button>
-                        <Typography variant="h5" fontWeight="bold">
+                        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
                             Historial de Formularios
                         </Typography>
                         {vehiculo && (
@@ -147,91 +160,104 @@ const FormularioHistorial = () => {
                             />
                         )}
                     </Box>
+                    <Button
+                        variant="outlined"
+                        onClick={cargarDatos}
+                        size="small"
+                        disabled={loading}
+                    >
+                        Refrescar
+                    </Button>
                 </Box>
 
                 {/* Error */}
                 {error && (
-                    <Alert severity="error" sx={{ mb: 2, borderRadius: '0.5rem' }}>
+                    <Alert severity="error" sx={{ mb: 2, borderRadius: '0.5rem' }} onClose={() => setError(null)}>
                         {error}
                     </Alert>
                 )}
 
-                {/* Tabla de historial */}
-                <Paper elevation={3} sx={{ borderRadius: '0.75rem', overflow: 'hidden' }}>
-                    <TableContainer>
-                        <Table>
-                            <TableHead>
-                                <TableRow sx={{ bgcolor: 'background.default' }}>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Título</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Estado</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Fecha de Emisión</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Creado por</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Fecha de Creación</TableCell>
-                                    <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Acciones</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {formularios.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} sx={{ textAlign: 'center', py: 4 }}>
-                                            <Typography color="text.secondary">
-                                                No hay formularios registrados para este vehículo
-                                            </Typography>
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    formularios.map((form) => (
-                                        <TableRow key={form.id} hover>
-                                            <TableCell>#{form.id}</TableCell>
-                                            <TableCell>{form.titulo || `FORM. ${form.tipo}`}</TableCell>
-                                            <TableCell>
-                                                <Chip
-                                                    label={getEstadoLabel(form.estado)}
-                                                    color={getEstadoColor(form.estado)}
-                                                    size="small"
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                {form.fecha_emision
-                                                    ? new Date(form.fecha_emision).toLocaleDateString()
-                                                    : 'No emitido'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {form.creador?.nombre_completo || 'Sistema'}
-                                            </TableCell>
-                                            <TableCell>
-                                                {new Date(form.created_at).toLocaleDateString()}
-                                            </TableCell>
-                                            <TableCell sx={{ textAlign: 'center' }}>
-                                                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
-                                                    <Tooltip title="Ver Detalle">
-                                                        <IconButton
-                                                            size="small"
-                                                            color="primary"
-                                                            onClick={() => handleVerDetalle(form.id)}
-                                                        >
-                                                            <VisibilityIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    <Tooltip title="Reutilizar">
-                                                        <IconButton
-                                                            size="small"
-                                                            color="info"
-                                                            onClick={() => handleReutilizar(form)}
-                                                        >
-                                                            <PictureAsPdfIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                </Box>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
+                {/* Filtros */}
+                <Paper elevation={2} sx={{ p: 2, mb: 2, borderRadius: '0.5rem' }}>
+                    <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} md={5}>
+                            <TextField
+                                fullWidth
+                                placeholder="Buscar por título, tipo o ID..."
+                                value={filtro}
+                                onChange={(e) => setFiltro(e.target.value)}
+                                size="small"
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon />
+                                        </InputAdornment>
+                                    ),
+                                    endAdornment: filtro && (
+                                        <InputAdornment position="end">
+                                            <IconButton size="small" onClick={() => setFiltro('')}>
+                                                <ClearIcon fontSize="small" />
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                            <FormControl fullWidth size="small">
+                                <InputLabel>Estado</InputLabel>
+                                <Select
+                                    value={estadoFiltro}
+                                    onChange={(e) => setEstadoFiltro(e.target.value)}
+                                    label="Estado"
+                                >
+                                    <MenuItem value="">Todos</MenuItem>
+                                    <MenuItem value="borrador">Borrador</MenuItem>
+                                    <MenuItem value="finalizado">Finalizado</MenuItem>
+                                    <MenuItem value="archivado">Archivado</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleLimpiarFiltros}
+                                    size="small"
+                                >
+                                    Limpiar
+                                </Button>
+                                <Chip
+                                    label={`${formulariosFiltrados.length} resultados`}
+                                    color="primary"
+                                    variant="outlined"
+                                    size="small"
+                                />
+                            </Box>
+                        </Grid>
+                    </Grid>
                 </Paper>
+
+                {/* Lista de formularios */}
+                {formulariosFiltrados.length === 0 ? (
+                    <Paper sx={{ p: 4, textAlign: 'center', borderRadius: '0.5rem' }}>
+                        <Typography color="text.secondary">
+                            No hay formularios registrados
+                        </Typography>
+                    </Paper>
+                ) : (
+                    <Box>
+                        {formulariosFiltrados.map((formulario) => (
+                            <FormularioHistorialItem
+                                key={formulario.id}
+                                formulario={formulario}
+                                onVer={handleVerDetalle}
+                                onReutilizar={handleReutilizar}
+                                onExportar={handleExportar}
+                            />
+                        ))}
+                    </Box>
+                )}
             </Box>
         </Layout>
     );

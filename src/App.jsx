@@ -36,10 +36,10 @@ import ViewRepuesto from './pages/repuestos/ViewRepuesto';
 // REPORTES
 import ReportesPage from './pages/reportes';
 
-// FORMULARIOS D
+// SPRINT 7: FORMULARIOS DINÁMICOS (CEMAPOL)
+import FormulariosPage from './pages/formularios';
 import FormularioEditor from './pages/formularios/FormularioEditor';
 import FormularioHistorial from './pages/formularios/FormularioHistorial';
-import FormularioView from './pages/formularios/FormularioView';
 
 // RUTAS PRIVADAS
 import PrivateRoute from './routes/PrivateRoute';
@@ -94,15 +94,12 @@ export default function AppRoutes() {
       {/* ===== REPORTES ===== */}
       <Route path="/reportes" element={<PrivateRoute><ReportesPage /></PrivateRoute>} />
 
-      {/* === FORMULARIOS D======= */}
-      {/* Editor de formularios: /formularios/editar/:tipo/:vehiculoId */}
+      {/* ===== FORMULARIOS DINÁMICOS ===== */}
+      <Route path="/vehiculos/:vehiculoId/formularios" element={<PrivateRoute><FormulariosPage /></PrivateRoute>} />
       <Route path="/formularios/editar/:tipo/:vehiculoId" element={<PrivateRoute><FormularioEditor /></PrivateRoute>} />
-      
-      {/* Historial de formularios: /formularios/historial/:vehiculoId/:tipo */}
+      <Route path="/formularios/historial/:vehiculoId" element={<PrivateRoute><FormularioHistorial /></PrivateRoute>} />
       <Route path="/formularios/historial/:vehiculoId/:tipo" element={<PrivateRoute><FormularioHistorial /></PrivateRoute>} />
-      
-      {/* Ver detalle de formulario: /formularios/ver/:id */}
-      <Route path="/formularios/ver/:id" element={<PrivateRoute><FormularioView /></PrivateRoute>} />
+      <Route path="/formularios/ver/:id" element={<PrivateRoute><FormularioEditor /></PrivateRoute>} />
 
       {/* ===== RUTA POR DEFECTO ===== */}
       <Route path="*" element={<Navigate to="/" replace />} />

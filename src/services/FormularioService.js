@@ -2,12 +2,22 @@ import api from '../api/axios';
 
 export const formularioService = {
     /**
-     * Obtener la estructura de un formulario
+     * Obtener estructura de un formulario
      */
     getEstructura: (tipo) => api.get(`/formularios/estructura/${tipo}`),
 
     /**
-     * Obtener historial de formularios de un vehículo
+     * Obtener un formulario por ID
+     */
+    getById: (id) => api.get(`/formularios/${id}`),
+
+    /**
+     * Obtener formularios por vehículo (para la pestaña)
+     */
+    getByVehiculo: (vehiculoId) => api.get(`/vehiculos/${vehiculoId}/formularios`),
+
+    /**
+     * Obtener historial de formularios
      */
     getHistorial: (vehiculoId, tipo = null) => {
         const url = tipo 
@@ -17,51 +27,43 @@ export const formularioService = {
     },
 
     /**
-     * Obtener un formulario específico
-     */
-    getById: (id) => api.get(`/formularios/${id}`),
-
-    /**
-     * Guardar borrador de formulario
+     * Guardar borrador
      */
     guardarBorrador: (data) => api.post('/formularios/guardar', data),
 
     /**
-     * Finalizar un formulario
+     * Finalizar formulario
      */
     finalizar: (id) => api.post(`/formularios/${id}/finalizar`),
 
     /**
-     * Exportar formulario con datos dinámicos
+     * Exportar PDF
      */
-    exportarConDatos: async (vehiculoId, tipo, datos) => {
-        try {
-            const response = await api.post('/formularios/exportar', {
-                vehiculo_id: vehiculoId,
-                tipo: tipo,
-                datos: datos
-            }, {
-                responseType: 'blob'
-            });
+    exportar: (data) => api.post('/formularios/exportar', data, {
+        responseType: 'blob'
+    }),
 
-            // Crear URL para descarga
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `FORM_${tipo}_${new Date().toISOString().slice(0, 10)}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
+    /**
+     * Exportar Kárdex
+     */
+    exportarKardex: (vehiculoId) => api.get(`/vehiculos/${vehiculoId}/kardex`, {
+        responseType: 'blob'
+    }),
 
-            return true;
+    /**
+     * Subir foto al Kárdex
+     */
+    subirFotoKardex: (vehiculoId, foto, descripcion = '') => {
+        const formData = new FormData();
+        formData.append('foto', foto);
+        if (descripcion) formData.append('descripcion', descripcion);
+        return api.post(`/vehiculos/${vehiculoId}/kardex/foto`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+    },
 
-        } catch (error) {
-            console.error('Error exportando formulario:', error);
-            const message = error.response?.data?.message || 'Error al exportar el formulario';
-            throw new Error(message);
-        }
-    }
+    /**
+     * Eliminar foto del Kárdex
+     */
+    eliminarFotoKardex: (documentoId) => api.delete(`/documentos/${documentoId}/kardex`),
 };
-
-export default formularioService;
