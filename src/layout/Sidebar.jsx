@@ -50,6 +50,7 @@ export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle })
 
   const isDarkMode = theme.palette.mode === 'dark';
 
+  // Filtrar items según permisos del usuario
   const itemsPermitidos = menuItems.filter(item => {
     // Si no requiere permiso, siempre visible (Dashboard, Perfil)
     if (!item.permiso) return true;

@@ -21,11 +21,8 @@ import Layout from '../../layout/Layout';
 import { useFormulario } from '../../hooks/useFormulario';
 import FormularioDinamico from '../../components/formularios/FormularioDinamico';
 import FormularioHeader from '../../components/formularios/FormularioHeader';
-import KardexEditor from '../../components/formularios/KardexEditor';
-import { vehiculoService } from '../../services/VehiculoService';
 
 const FormularioEditor = () => {
-    // ✅ CORREGIDO: usar vehiculoId directamente
     const { tipo, vehiculoId } = useParams();
     const navigate = useNavigate();
 
@@ -36,6 +33,7 @@ const FormularioEditor = () => {
         error,
         success,
         formularioId,
+        vehiculo,
         actualizarCampo,
         guardarBorrador,
         finalizar,
@@ -43,37 +41,9 @@ const FormularioEditor = () => {
         limpiarMensajes,
     } = useFormulario(tipo, vehiculoId);
 
-    const [vehiculo, setVehiculo] = useState(null);
-    const [cargandoVehiculo, setCargandoVehiculo] = useState(true);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
 
-    // ===== DETECTAR SI ES KÁRDEX (FORM. 12) =====
-    const esKardex = tipo === '12';
-
-    // Cargar vehículo
-    useEffect(() => {
-        const cargarVehiculo = async () => {
-            try {
-                // ✅ Verificar que vehiculoId existe
-                if (!vehiculoId) {
-                    console.error('❌ vehiculoId es undefined o null');
-                    setCargandoVehiculo(false);
-                    return;
-                }
-                console.log('🔍 Cargando vehículo con ID:', vehiculoId);
-                const response = await vehiculoService.getById(vehiculoId);
-                setVehiculo(response.data.data);
-            } catch (error) {
-                console.error('❌ Error cargando vehículo:', error);
-            } finally {
-                setCargandoVehiculo(false);
-            }
-        };
-
-        cargarVehiculo();
-    }, [vehiculoId]);
-
-    // Efecto para mostrar snackbar cuando hay éxito/error
+    // Efecto para mostrar snackbar
     useEffect(() => {
         if (success || error) {
             setSnackbarOpen(true);
@@ -105,31 +75,12 @@ const FormularioEditor = () => {
         await exportarPDF();
     };
 
-    // ===== SI ES KÁRDEX (FORM. 12), USAR EL EDITOR ESPECIAL =====
-    if (esKardex) {
-        return (
-            <KardexEditor
-                vehiculoId={vehiculoId}
-                datos={datos}
-                actualizarCampo={actualizarCampo}
-                guardarBorrador={guardarBorrador}
-                exportarPDF={exportarPDF}
-                finalizar={finalizar}
-                loading={loading}
-                error={error}
-                success={success}
-                limpiarMensajes={limpiarMensajes}
-                vehiculo={vehiculo}
-            />
-        );
-    }
-
-    // ===== VALIDACIÓN DE vehiculoId =====
+    // Validación de vehiculoId
     if (!vehiculoId) {
         return (
             <Layout>
                 <Alert severity="error" sx={{ m: 2 }}>
-                    Error: No se ha especificado un vehículo válido. Por favor, regresa e intenta de nuevo.
+                    Error: No se ha especificado un vehículo válido.
                 </Alert>
                 <Button variant="contained" onClick={() => navigate('/vehiculos')}>
                     Volver a Vehículos
@@ -138,7 +89,7 @@ const FormularioEditor = () => {
         );
     }
 
-    if (loading || cargandoVehiculo) {
+    if (loading) {
         return (
             <Layout>
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
@@ -244,7 +195,7 @@ const FormularioEditor = () => {
                             size="small"
                             startIcon={<CheckCircleIcon />}
                             onClick={handleFinalizar}
-                            disabled={loading || formularioId === null}
+                            disabled={loading || !formularioId}
                         >
                             Finalizar
                         </Button>
@@ -267,7 +218,7 @@ const FormularioEditor = () => {
                 <Alert severity="info" sx={{ mb: 2, borderRadius: '0.5rem' }}>
                     <Typography variant="body2">
                         Complete los campos del formulario. Los campos con <strong style={{ color: 'red' }}>*</strong> son obligatorios.
-                        Puede guardar como borrador en cualquier momento.
+                        Los datos del vehículo se precargan automáticamente.
                     </Typography>
                 </Alert>
 

@@ -2,8 +2,7 @@ import api from '../api/axios';
 
 export const bitacoraService = {
     /**
-     * Obtener todos los registros de bitácora
-     * ORDENADOS: Los más recientes primero (por el backend)
+     * Obtener todos los registros de bitácora con filtros
      */
     getAll: (params = {}) => api.get('/bitacoras', { params }),
 

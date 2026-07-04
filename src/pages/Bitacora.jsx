@@ -14,30 +14,60 @@ import {
     Alert,
     IconButton,
     Tooltip,
+    TablePagination,
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import Layout from '../layout/Layout';
+import BitacoraFilters from '../components/bitacora/BitacoraFilters';
 import { bitacoraService } from '../services/BitacoraService';
 
 const Bitacora = () => {
-    // -- ESTADOS --
+    // -- ESTADOS DE DATOS --
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // -- CARGAR REGISTROS --
+    // -- ESTADOS DE PAGINACIÓN --
+    const [pagination, setPagination] = useState({
+        total: 0,
+        current_page: 1,
+        per_page: 50,
+        last_page: 1,
+    });
+
+    // -- ESTADOS DE FILTROS --
+    const [filtros, setFiltros] = useState({});
+    const [filtrosAplicados, setFiltrosAplicados] = useState(false);
+
+    // -- CARGAR REGISTROS CON FILTROS --
     useEffect(() => {
         cargarLogs();
-    }, []);
+    }, [filtros, pagination.current_page]);
 
     const cargarLogs = async () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await bitacoraService.getAll();
+
+            const params = {
+                ...filtros,
+                page: pagination.current_page,
+                per_page: pagination.per_page,
+            };
+
+            const response = await bitacoraService.getAll(params);
+
             // Asegurar que los datos estén en el formato correcto
             const data = response.data.data || response.data || [];
+            const meta = response.data.meta || {};
+
             setLogs(Array.isArray(data) ? data : []);
+            setPagination({
+                total: meta.total || data.length || 0,
+                current_page: meta.current_page || 1,
+                per_page: meta.per_page || 50,
+                last_page: meta.last_page || 1,
+            });
         } catch (error) {
             console.error('Error cargando bitácora:', error);
             setError('Error al cargar los registros de bitácora');
@@ -49,6 +79,25 @@ const Bitacora = () => {
     // -- REFRESCAR --
     const handleRefresh = () => {
         cargarLogs();
+    };
+
+    // -- MANEJAR APLICACIÓN DE FILTROS --
+    const handleFilter = (nuevosFiltros) => {
+        setFiltros(nuevosFiltros);
+        setFiltrosAplicados(Object.keys(nuevosFiltros).length > 0);
+        setPagination(prev => ({ ...prev, current_page: 1 }));
+    };
+
+    // -- MANEJAR LIMPIEZA DE FILTROS --
+    const handleClearFilters = () => {
+        setFiltros({});
+        setFiltrosAplicados(false);
+        setPagination(prev => ({ ...prev, current_page: 1 }));
+    };
+
+    // -- MANEJAR CAMBIO DE PÁGINA --
+    const handlePageChange = (event, newPage) => {
+        setPagination(prev => ({ ...prev, current_page: newPage + 1 }));
     };
 
     // -- FORMATEAR FECHA --
@@ -109,7 +158,6 @@ const Bitacora = () => {
                         Bitácora de Auditoría
                     </Typography>
                     
-                    {/* Con wrapper span para botón deshabilitado */}
                     <Tooltip title="Refrescar">
                         <span>
                             <IconButton onClick={handleRefresh} disabled={loading}>
@@ -119,21 +167,30 @@ const Bitacora = () => {
                     </Tooltip>
                 </Box>
 
-                {/* NOTA INFORMATIVA */}
+                {/* ERROR */}
                 {error && (
                     <Alert severity="error" sx={{ mb: '1.5rem', borderRadius: '0.5rem' }} onClose={() => setError(null)}>
                         {error}
                     </Alert>
                 )}
 
+                {/* NOTA INFORMATIVA */}
                 <Alert severity="info" sx={{ mb: '1.5rem', borderRadius: '0.5rem' }}>
                     <Typography variant="body2">
                         <strong>Nota:</strong> Registro histórico de todas las acciones realizadas en el sistema.
-                        Los registros más recientes se muestran primero.
+                        {filtrosAplicados && ' Los registros están filtrados según los criterios seleccionados.'}
+                        {!filtrosAplicados && ' Los registros más recientes se muestran primero.'}
                     </Typography>
                 </Alert>
 
-                {/* TABLA DE BITÁCORA - SIN MÓDULO */}
+                {/* COMPONENTE DE FILTROS */}
+                <BitacoraFilters
+                    onFilter={handleFilter}
+                    onClear={handleClearFilters}
+                    loading={loading}
+                />
+
+                {/* TABLA DE BITÁCORA */}
                 <TableContainer
                     component={Paper}
                     elevation={3}
@@ -267,7 +324,10 @@ const Bitacora = () => {
                                 <TableRow>
                                     <TableCell colSpan={5} sx={{ textAlign: 'center', py: 3 }}>
                                         <Typography color="text.secondary">
-                                            No hay registros de bitácora disponibles.
+                                            {filtrosAplicados
+                                                ? 'No hay registros que coincidan con los filtros seleccionados.'
+                                                : 'No hay registros de bitácora disponibles.'
+                                            }
                                         </Typography>
                                     </TableCell>
                                 </TableRow>
@@ -276,11 +336,38 @@ const Bitacora = () => {
                     </Table>
                 </TableContainer>
 
+                {/* PAGINACIÓN */}
+                {!loading && logs.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                        <TablePagination
+                            component="div"
+                            count={pagination.total}
+                            page={(pagination.current_page || 1) - 1}
+                            onPageChange={handlePageChange}
+                            rowsPerPage={pagination.per_page || 50}
+                            rowsPerPageOptions={[25, 50, 100]}
+                            labelRowsPerPage="Registros por página:"
+                            labelDisplayedRows={({ from, to, count }) =>
+                                `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
+                            }
+                            sx={{
+                                '& .MuiTablePagination-select': {
+                                    fontSize: '0.85rem',
+                                },
+                                '& .MuiTablePagination-displayedRows': {
+                                    fontSize: '0.85rem',
+                                },
+                            }}
+                        />
+                    </Box>
+                )}
+
                 {/* CONTADOR DE REGISTROS */}
                 {!loading && logs.length > 0 && (
-                    <Box sx={{ mt: 2, textAlign: 'right' }}>
+                    <Box sx={{ mt: 1, textAlign: 'right' }}>
                         <Typography variant="caption" color="text.secondary">
-                            Total de registros: {logs.length}
+                            Total de registros: {pagination.total}
+                            {filtrosAplicados && ' (filtrados)'}
                         </Typography>
                     </Box>
                 )}
