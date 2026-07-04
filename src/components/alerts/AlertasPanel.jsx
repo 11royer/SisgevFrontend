@@ -9,6 +9,7 @@ import {
     Collapse,
     IconButton,
     Badge,
+    Alert,
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -17,19 +18,28 @@ import DoneAllIcon from '@mui/icons-material/DoneAll';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { alertaService } from '../../services/AlertaService';
 import AlertaCard from './AlertaCard';
+import useAuth from '../../auth/UseAuth';
+import { hasPermission } from '../../utils/hasPermission';
 
 const AlertasPanel = () => {
-    const navigate = useNavigate(); // PARA NAVEGAR
+    const navigate = useNavigate();
+    const { user: currentUser } = useAuth();
+    
+    // PERMISOS - CONTROL DE ACCESO A ALERTAS
+    const puedeVerAlertas = hasPermission(currentUser, 'ver_alertas');
+    const puedeGenerarAlertas = hasPermission(currentUser, 'generar_alertas');
+
     const [alertas, setAlertas] = useState([]);
     const [resumen, setResumen] = useState({ total: 0, por_nivel: { danger: 0, warning: 0, info: 0 } });
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState(true);
+    const [error, setError] = useState(null);
     
     const cargarAlertas = async () => {
         try {
             setLoading(true);
+            setError(null);
             const response = await alertaService.getActivas();
-            // Asegurar que alertas es un array
             setAlertas(response.data.data || response.data.lista || []);
             setResumen({
                 total: response.data.total || response.data.lista?.length || 0,
@@ -37,6 +47,7 @@ const AlertasPanel = () => {
             });
         } catch (error) {
             console.error('Error cargando alertas:', error);
+            setError('Error al cargar las alertas');
             setAlertas([]);
         } finally {
             setLoading(false);
@@ -44,10 +55,12 @@ const AlertasPanel = () => {
     };
     
     useEffect(() => {
-        cargarAlertas();
-        const interval = setInterval(cargarAlertas, 60000); // cada minuto
-        return () => clearInterval(interval);
-    }, []);
+        if (puedeVerAlertas) {
+            cargarAlertas();
+            const interval = setInterval(cargarAlertas, 60000);
+            return () => clearInterval(interval);
+        }
+    }, [puedeVerAlertas]);
     
     const handleMarcarVista = async (id) => {
         try {
@@ -55,6 +68,7 @@ const AlertasPanel = () => {
             await cargarAlertas();
         } catch (error) {
             console.error('Error:', error);
+            setError('Error al marcar alerta como vista');
         }
     };
     
@@ -64,13 +78,40 @@ const AlertasPanel = () => {
             await cargarAlertas();
         } catch (error) {
             console.error('Error:', error);
+            setError('Error al marcar todas las alertas como vistas');
         }
     };
     
-    // Ver todas las alertas (navegar a bitácora o reportes)
     const handleVerTodas = () => {
-        navigate('/bitacora'); // o a una página de alertas si la tienes
+        navigate('/bitacora');
     };
+    
+    const handleGenerarAlertas = async () => {
+        try {
+            setLoading(true);
+            await alertaService.generar();
+            await cargarAlertas();
+        } catch (error) {
+            console.error('Error:', error);
+            setError('Error al generar alertas');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // SI NO TIENE PERMISO PARA VER ALERTAS, MOSTRAR MENSAJE
+    if (!puedeVerAlertas) {
+        return (
+            <Paper sx={{ p: 2, borderRadius: '0.75rem' }}>
+                <Alert severity="info" sx={{ borderRadius: '0.5rem' }}>
+                    <Typography variant="body2">
+                        No tienes permisos para ver las alertas del sistema. 
+                        Se requiere el permiso: <strong>ver_alertas</strong>
+                    </Typography>
+                </Alert>
+            </Paper>
+        );
+    }
     
     if (loading && alertas.length === 0) {
         return (
@@ -142,20 +183,30 @@ const AlertasPanel = () => {
             {/* Body */}
             <Collapse in={expanded}>
                 <Box sx={{ p: 1.5 }}>
+                    {error && (
+                        <Alert severity="error" sx={{ mb: 2, borderRadius: '0.5rem' }}>
+                            {error}
+                        </Alert>
+                    )}
+                    
                     {alertas.length === 0 ? (
                         <Box sx={{ textAlign: 'center', py: 3 }}>
                             <NotificationsIcon sx={{ fontSize: '2rem', color: 'text.secondary', mb: 1 }} />
                             <Typography color="text.secondary">
                                 No hay alertas activas
                             </Typography>
-                            <Button 
-                                size="small" 
-                                variant="outlined" 
-                                sx={{ mt: 1 }}
-                                onClick={() => alertaService.generar().then(cargarAlertas)}
-                            >
-                                Generar alertas manualmente
-                            </Button>
+                            {/* BOTÓN GENERAR ALERTAS - SOLO SI TIENE PERMISO */}
+                            {puedeGenerarAlertas && (
+                                <Button 
+                                    size="small" 
+                                    variant="outlined" 
+                                    sx={{ mt: 1 }}
+                                    onClick={handleGenerarAlertas}
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Generando...' : 'Generar alertas manualmente'}
+                                </Button>
+                            )}
                         </Box>
                     ) : (
                         alertas.map(alerta => (
@@ -163,6 +214,8 @@ const AlertasPanel = () => {
                                 key={alerta.id} 
                                 alerta={alerta} 
                                 onClose={handleMarcarVista}
+                                // PASAR PERMISO PARA CONTROLAR CIERRE
+                                puedeCerrar={true}
                             />
                         ))
                     )}

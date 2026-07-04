@@ -8,6 +8,7 @@ import MantenimientoForm from '../../components/mantenimientos/MantenimientoForm
 import { mantenimientoService } from '../../services/MantenimientoService';
 import { salidaRepuestoService } from '../../services/SalidaRepuestoService';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission } from '../../utils/hasPermission';
 
 const EditMantenimiento = () => {
     const { id } = useParams();
@@ -19,13 +20,14 @@ const EditMantenimiento = () => {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
+    const puedeEditar = hasPermission(currentUser, 'editar_mantenimientos');
 
-    // Verificar permisos
-    if (!['Administrador', 'Técnico'].includes(currentUser?.rol?.nombre)) {
+    if (!puedeEditar) {
         return (
             <Layout>
                 <Alert severity="error" sx={{ m: 2 }}>
                     No tienes permisos para editar mantenimientos.
+                    Se requiere el permiso: <strong>editar_mantenimientos</strong>
                 </Alert>
             </Layout>
         );
@@ -41,15 +43,30 @@ const EditMantenimiento = () => {
             const response = await mantenimientoService.getById(id);
             const data = response.data.data || response.data;
             
+            console.log('Datos del mantenimiento:', data);
+            
+            // NORMALIZAR EL CAMPO VEHÍCULO
+            let vehiculoId = data.vehiculo_id;
+            
+            if (data.vehiculo && typeof data.vehiculo === 'object') {
+                vehiculoId = data.vehiculo.id;
+            } else if (data.vehiculo_id) {
+                vehiculoId = parseInt(data.vehiculo_id);
+            } else {
+                vehiculoId = '';
+            }
+            
+            // Asignar el ID normalizado
+            data.vehiculo_id = vehiculoId;
+            
             // Cargar también los repuestos asociados
             if (data.id) {
                 try {
                     const salidasResponse = await salidaRepuestoService.getByMantenimiento(data.id);
                     const salidas = salidasResponse.data.data || salidasResponse.data || [];
                     
-                    // Transformar salidas a formato que espera el formulario
                     data.salidas_repuestos = salidas.map(s => ({
-                        repuesto_id: s.repuesto?.id,
+                        repuesto_id: s.repuesto?.id || s.repuesto_id,
                         repuesto: s.repuesto,
                         cantidad_usada: s.cantidad_usada
                     }));
@@ -59,6 +76,7 @@ const EditMantenimiento = () => {
                 }
             }
             
+            console.log('Datos normalizados:', data);
             setMantenimiento(data);
         } catch (error) {
             console.error('Error cargando mantenimiento:', error);
@@ -78,18 +96,17 @@ const EditMantenimiento = () => {
             setSaving(true);
             limpiarMensajes();
 
-            // Separar datos del mantenimiento y repuestos
             const { repuestos, ...mantenimientoData } = formData;
 
-            // 1. Actualizar el mantenimiento
+            if (mantenimientoData.vehiculo_id) {
+                mantenimientoData.vehiculo_id = parseInt(mantenimientoData.vehiculo_id);
+            }
+
             await mantenimientoService.update(id, mantenimientoData);
 
-            // 2. Gestionar repuestos: eliminar existentes y crear nuevos
-            // Primero, obtener las salidas actuales
             const salidasActuales = await salidaRepuestoService.getByMantenimiento(id);
             const salidasExistentes = salidasActuales.data.data || salidasActuales.data || [];
 
-            // Eliminar salidas que ya no están en la nueva lista
             const idsExistentes = salidasExistentes.map(s => s.repuesto?.id);
             const idsNuevos = repuestos?.map(r => r.repuesto_id) || [];
             
@@ -101,10 +118,8 @@ const EditMantenimiento = () => {
                 }
             }
 
-            // Crear nuevas salidas para repuestos no existentes
             if (repuestos && repuestos.length > 0) {
                 for (const rep of repuestos) {
-                    // Verificar si ya existe
                     const yaExiste = salidasExistentes.some(s => s.repuesto?.id === rep.repuesto_id);
                     
                     if (!yaExiste) {
@@ -116,11 +131,8 @@ const EditMantenimiento = () => {
                             observaciones: `Consumo en mantenimiento #${id}`
                         });
                     } else {
-                        // Actualizar cantidad si ya existe
                         const salidaExistente = salidasExistentes.find(s => s.repuesto?.id === rep.repuesto_id);
                         if (salidaExistente && salidaExistente.cantidad_usada !== rep.cantidad) {
-                            // Nota: La API puede no permitir actualizar cantidad, 
-                            // por lo que eliminamos y recreamos
                             await salidaRepuestoService.delete(salidaExistente.id);
                             await salidaRepuestoService.create({
                                 repuesto_id: rep.repuesto_id,
@@ -178,7 +190,6 @@ const EditMantenimiento = () => {
     return (
         <Layout>
             <Box sx={{ width: '100%', p: { xs: '0.75rem', md: '1.5rem' } }}>
-                {/* Encabezado */}
                 <Box sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -200,7 +211,6 @@ const EditMantenimiento = () => {
                     </Button>
                 </Box>
 
-                {/* Alertas */}
                 {error && (
                     <Alert 
                         severity="error" 
@@ -220,7 +230,6 @@ const EditMantenimiento = () => {
                     </Alert>
                 )}
 
-                {/* Formulario */}
                 <MantenimientoForm
                     mantenimiento={mantenimiento}
                     onSubmit={handleSubmit}

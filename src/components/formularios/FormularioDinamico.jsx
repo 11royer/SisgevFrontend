@@ -45,7 +45,10 @@ const FormularioDinamico = ({ estructura, datos, actualizarCampo }) => {
     return (
         <Grid container spacing={2}>
             {Object.entries(estructura.campos || {}).map(([nombre, config]) => (
-                <Grid item xs={12} md={config.span || 6} key={nombre}>
+                <Grid 
+                    size={{ xs: 12, md: config.span || 6 }} 
+                    key={nombre}
+                >
                     {renderCampo(nombre, config)}
                 </Grid>
             ))}

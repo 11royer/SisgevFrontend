@@ -1,4 +1,3 @@
-// PÁGINA PRINCIPAL DE MANTENIMIENTOS
 import React, { useState, useEffect } from 'react';
 import {
     Box,
@@ -30,6 +29,7 @@ import Layout from '../../layout/Layout';
 import MantenimientoTable from '../../components/mantenimientos/MantenimientoTable';
 import { useMantenimientos } from '../../hooks/useMantenimientos';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission, hasAnyPermission } from '../../utils/hasPermission';
 
 const MantenimientosPage = () => {
     const navigate = useNavigate();
@@ -58,8 +58,18 @@ const MantenimientosPage = () => {
         fecha_hasta: '',
     });
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
+    const puedeCrear = hasPermission(currentUser, 'crear_mantenimientos');
+    const puedeEditar = hasPermission(currentUser, 'editar_mantenimientos');
+    const puedeEliminar = hasPermission(currentUser, 'eliminar_mantenimientos');
+    const puedeCambiarEstado = hasPermission(currentUser, 'cambiar_estado_mantenimientos');
     
-    const puedeEscribir = ['Administrador', 'Técnico'].includes(currentUser?.rol?.nombre);
+    // Para acciones que requieren cualquiera de estos permisos
+    const puedeEscribir = hasAnyPermission(currentUser, [
+        'crear_mantenimientos',
+        'editar_mantenimientos',
+        'eliminar_mantenimientos',
+        'cambiar_estado_mantenimientos'
+    ]);
 
     useEffect(() => {
         setFiltrosLocales(prev => ({
@@ -151,11 +161,13 @@ const MantenimientosPage = () => {
                     </Typography>
                     <Box sx={{ display: 'flex', gap: '1rem' }}>
                         <Tooltip title="Refrescar">
-                            <IconButton onClick={handleRefresh} disabled={loading}>
-                                <RefreshIcon />
-                            </IconButton>
+                            <span>
+                                <IconButton onClick={handleRefresh} disabled={loading}>
+                                    <RefreshIcon />
+                                </IconButton>
+                            </span>
                         </Tooltip>
-                        {puedeEscribir && (
+                        {puedeCrear && (
                             <Button
                                 variant="contained"
                                 startIcon={<AddIcon />}
@@ -168,10 +180,10 @@ const MantenimientosPage = () => {
                     </Box>
                 </Box>
 
-                {/* Tarjetas de estadísticas */}
+                {/* ESTADÍSTICAS */}
                 {estadisticas && (
                     <Grid container spacing={2} sx={{ mb: '1.5rem' }}>
-                        <Grid item xs={6} sm={3} md={2}>
+                        <Grid size={{ xs: 6, sm: 3, md: 2 }}>
                             <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
                                 <Typography variant="h5" color="secondary.main" fontWeight="bold">
                                     {estadisticas.totales_por_tipo?.Predictivo || 0}
@@ -179,7 +191,7 @@ const MantenimientosPage = () => {
                                 <Typography variant="caption" color="text.secondary">Predictivo</Typography>
                             </Paper>
                         </Grid>
-                        <Grid item xs={6} sm={3} md={2}>
+                        <Grid size={{ xs: 6, sm: 3, md: 2 }}>
                             <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
                                 <Typography variant="h5" color="primary.main" fontWeight="bold">
                                     {estadisticas.totales_por_tipo?.Preventivo || 0}
@@ -187,7 +199,7 @@ const MantenimientosPage = () => {
                                 <Typography variant="caption" color="text.secondary">Preventivo</Typography>
                             </Paper>
                         </Grid>
-                        <Grid item xs={6} sm={3} md={2}>
+                        <Grid size={{ xs: 6, sm: 3, md: 2 }}>
                             <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
                                 <Typography variant="h5" color="error.main" fontWeight="bold">
                                     {estadisticas.totales_por_tipo?.Correctivo || 0}
@@ -195,7 +207,7 @@ const MantenimientosPage = () => {
                                 <Typography variant="caption" color="text.secondary">Correctivo</Typography>
                             </Paper>
                         </Grid>
-                        <Grid item xs={6} sm={3} md={2}>
+                        <Grid size={{ xs: 6, sm: 3, md: 2 }}>
                             <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
                                 <Typography variant="h5" color="warning.main" fontWeight="bold">
                                     {estadisticas.por_estado?.pendiente || 0}
@@ -203,7 +215,7 @@ const MantenimientosPage = () => {
                                 <Typography variant="caption" color="text.secondary">Pendientes</Typography>
                             </Paper>
                         </Grid>
-                        <Grid item xs={6} sm={3} md={2}>
+                        <Grid size={{ xs: 6, sm: 3, md: 2 }}>
                             <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
                                 <Typography variant="h5" color="info.main" fontWeight="bold">
                                     {estadisticas.por_estado?.en_proceso || 0}
@@ -211,7 +223,7 @@ const MantenimientosPage = () => {
                                 <Typography variant="caption" color="text.secondary">En Proceso</Typography>
                             </Paper>
                         </Grid>
-                        <Grid item xs={6} sm={3} md={2}>
+                        <Grid size={{ xs: 6, sm: 3, md: 2 }}>
                             <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
                                 <Typography variant="h5" color="success.main" fontWeight="bold">
                                     {estadisticas.por_estado?.finalizado || 0}
@@ -246,10 +258,10 @@ const MantenimientosPage = () => {
                     </Typography>
                 </Alert>
 
-                {/* Barra de búsqueda */}
+                {/* BARRA DE BÚSQUEDA */}
                 <Paper elevation={2} sx={{ p: '1rem', mb: '1.5rem', borderRadius: '0.5rem' }}>
                     <Grid container spacing="1rem" alignItems="center">
-                        <Grid item xs={12} md={5}>
+                        <Grid size={{ xs: 12, md: 5 }}>
                             <TextField
                                 fullWidth
                                 placeholder="Buscar por vehículo o descripción..."
@@ -266,7 +278,7 @@ const MantenimientosPage = () => {
                                 onKeyPress={(e) => e.key === 'Enter' && handleAplicarFiltros()}
                             />
                         </Grid>
-                        <Grid item xs={12} md={3}>
+                        <Grid size={{ xs: 12, md: 3 }}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Tipo</InputLabel>
                                 <Select
@@ -280,7 +292,7 @@ const MantenimientosPage = () => {
                                 </Select>
                             </FormControl>
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid size={{ xs: 12, md: 4 }}>
                             <Box sx={{ display: 'flex', gap: '1rem' }}>
                                 <Button
                                     variant="outlined"
@@ -313,7 +325,7 @@ const MantenimientosPage = () => {
                     {mostrarFiltros && (
                         <Box sx={{ mt: '1.5rem', pt: '1rem', borderTop: '1px solid', borderColor: 'divider' }}>
                             <Grid container spacing="1rem">
-                                <Grid item xs={12} md={4}>
+                                <Grid size={{ xs: 12, md: 4 }}>
                                     <FormControl fullWidth size="small">
                                         <InputLabel>Estado</InputLabel>
                                         <Select
@@ -327,7 +339,7 @@ const MantenimientosPage = () => {
                                         </Select>
                                     </FormControl>
                                 </Grid>
-                                <Grid item xs={12} md={4}>
+                                <Grid size={{ xs: 12, md: 4 }}>
                                     <TextField
                                         fullWidth
                                         label="Fecha Desde"
@@ -338,7 +350,7 @@ const MantenimientosPage = () => {
                                         InputLabelProps={{ shrink: true }}
                                     />
                                 </Grid>
-                                <Grid item xs={12} md={4}>
+                                <Grid size={{ xs: 12, md: 4 }}>
                                     <TextField
                                         fullWidth
                                         label="Fecha Hasta"
@@ -358,11 +370,15 @@ const MantenimientosPage = () => {
                 <MantenimientoTable
                     mantenimientos={mantenimientos}
                     loading={loading}
-                    onEdit={puedeEscribir ? handleEditarMantenimiento : null}
-                    onDelete={puedeEscribir ? handleEliminar : null}
+                    onEdit={puedeEditar ? handleEditarMantenimiento : null}
+                    onDelete={puedeEliminar ? handleEliminar : null}
                     onView={handleVerDetalle}
+                    onCambiarEstado={puedeCambiarEstado ? cambiarEstado : null}
                     pagination={pagination}
                     onPageChange={cambiarPagina}
+                    puedeEditar={puedeEditar}
+                    puedeEliminar={puedeEliminar}
+                    puedeCambiarEstado={puedeCambiarEstado}
                 />
             </Box>
         </Layout>

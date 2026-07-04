@@ -7,6 +7,7 @@ import Layout from '../../layout/Layout';
 import RepuestoForm from '../../components/repuestos/RepuestoForm';
 import { repuestoService } from '../../services/RepuestoService';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission } from '../../utils/hasPermission';
 
 const CreateRepuesto = () => {
     const navigate = useNavigate();
@@ -15,11 +16,15 @@ const CreateRepuesto = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
+    const puedeCrear = hasPermission(currentUser, 'crear_repuestos');
 
-    if (!['Administrador', 'Técnico'].includes(currentUser?.rol?.nombre)) {
+    if (!puedeCrear) {
         return (
             <Layout>
-                <Alert severity="error" sx={{ m: 2 }}>No tienes permisos para registrar repuestos.</Alert>
+                <Alert severity="error" sx={{ m: 2 }}>
+                    No tienes permisos para registrar repuestos.
+                    Se requiere el permiso: <strong>crear_repuestos</strong>
+                </Alert>
             </Layout>
         );
     }

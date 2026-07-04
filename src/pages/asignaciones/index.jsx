@@ -29,6 +29,7 @@ import Layout from '../../layout/Layout';
 import AsignacionTable from '../../components/asignaciones/AsignacionTable';
 import { useAsignaciones } from '../../hooks/useAsignaciones';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission, hasAnyPermission } from '../../utils/hasPermission';
 
 const AsignacionesPage = () => {
     const navigate = useNavigate();
@@ -57,7 +58,16 @@ const AsignacionesPage = () => {
     });
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
     
-    const puedeEscribir = ['Administrador', 'Operador'].includes(currentUser?.rol?.nombre);
+    const puedeCrear = hasPermission(currentUser, 'crear_asignaciones');
+    const puedeFinalizar = hasPermission(currentUser, 'finalizar_asignaciones');
+    const puedeEliminar = hasPermission(currentUser, 'eliminar_asignaciones');
+    
+    // Para acciones que requieren cualquiera de estos permisos
+    const puedeEscribir = hasAnyPermission(currentUser, [
+        'crear_asignaciones',
+        'finalizar_asignaciones',
+        'eliminar_asignaciones'
+    ]);
 
     useEffect(() => {
         setFiltrosLocales(prev => ({
@@ -130,11 +140,13 @@ const AsignacionesPage = () => {
                     </Typography>
                     <Box sx={{ display: 'flex', gap: '1rem' }}>
                         <Tooltip title="Refrescar">
-                            <IconButton onClick={handleRefresh} disabled={loading}>
-                                <RefreshIcon />
-                            </IconButton>
+                            <span>
+                                <IconButton onClick={handleRefresh} disabled={loading}>
+                                    <RefreshIcon />
+                                </IconButton>
+                            </span>
                         </Tooltip>
-                        {puedeEscribir && (
+                        {puedeCrear && (
                             <Button
                                 variant="contained"
                                 startIcon={<AddIcon />}
@@ -147,9 +159,9 @@ const AsignacionesPage = () => {
                     </Box>
                 </Box>
 
-                {/* Estadísticas rápidas */}
+                {/* ESTADÍSTICAS RÁPIDAS */}
                 <Grid container spacing={2} sx={{ mb: '1.5rem' }}>
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                         <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
                             <Typography variant="h4" color="success.main" fontWeight="bold">
                                 {pagination.activas || 0}
@@ -159,7 +171,7 @@ const AsignacionesPage = () => {
                             </Typography>
                         </Paper>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                         <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
                             <Typography variant="h4" color="text.primary" fontWeight="bold">
                                 {pagination.total || 0}
@@ -194,10 +206,10 @@ const AsignacionesPage = () => {
                     </Typography>
                 </Alert>
 
-                {/* Barra de búsqueda */}
+                {/* BARRA DE BÚSQUEDA */}
                 <Paper elevation={2} sx={{ p: '1rem', mb: '1.5rem', borderRadius: '0.5rem' }}>
                     <Grid container spacing="1rem" alignItems="center">
-                        <Grid item xs={12} md={5}>
+                        <Grid size={{ xs: 12, md: 5 }}>
                             <TextField
                                 fullWidth
                                 placeholder="Buscar por vehículo, conductor o destino..."
@@ -214,7 +226,7 @@ const AsignacionesPage = () => {
                                 onKeyPress={(e) => e.key === 'Enter' && handleAplicarFiltros()}
                             />
                         </Grid>
-                        <Grid item xs={12} md={3}>
+                        <Grid size={{ xs: 12, md: 3 }}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Estado</InputLabel>
                                 <Select
@@ -228,7 +240,7 @@ const AsignacionesPage = () => {
                                 </Select>
                             </FormControl>
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid size={{ xs: 12, md: 4 }}>
                             <Box sx={{ display: 'flex', gap: '1rem' }}>
                                 <Button
                                     variant="outlined"
@@ -261,7 +273,7 @@ const AsignacionesPage = () => {
                     {mostrarFiltros && (
                         <Box sx={{ mt: '1.5rem', pt: '1rem', borderTop: '1px solid', borderColor: 'divider' }}>
                             <Grid container spacing="1rem">
-                                <Grid item xs={12} md={6}>
+                                <Grid size={{ xs: 12, md: 6 }}>
                                     <TextField
                                         fullWidth
                                         label="Fecha Desde"
@@ -272,7 +284,7 @@ const AsignacionesPage = () => {
                                         InputLabelProps={{ shrink: true }}
                                     />
                                 </Grid>
-                                <Grid item xs={12} md={6}>
+                                <Grid size={{ xs: 12, md: 6 }}>
                                     <TextField
                                         fullWidth
                                         label="Fecha Hasta"
@@ -293,10 +305,12 @@ const AsignacionesPage = () => {
                     asignaciones={asignaciones}
                     loading={loading}
                     onView={handleVerDetalle}
-                    onFinalizar={puedeEscribir ? handleFinalizar : null}
-                    onDelete={puedeEscribir ? handleEliminar : null}
+                    onFinalizar={puedeFinalizar ? handleFinalizar : null}
+                    onDelete={puedeEliminar ? handleEliminar : null}
                     pagination={pagination}
                     onPageChange={cambiarPagina}
+                    puedeFinalizar={puedeFinalizar}
+                    puedeEliminar={puedeEliminar}
                 />
             </Box>
         </Layout>

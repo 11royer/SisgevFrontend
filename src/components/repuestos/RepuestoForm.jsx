@@ -108,7 +108,7 @@ const RepuestoForm = ({ repuesto, onSubmit, onCancel, loading }) => {
             <form onSubmit={handleSubmit}>
                 <Grid container spacing={3}>
                     {/* Código Interno */}
-                    <Grid item xs={12} md={4}>
+                    <Grid size={{ xs: 12, md: 4 }}>
                         <TextField
                             fullWidth
                             label="Código Interno *"
@@ -123,7 +123,7 @@ const RepuestoForm = ({ repuesto, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Nombre */}
-                    <Grid item xs={12} md={8}>
+                    <Grid size={{ xs: 12, md: 8 }}>
                         <TextField
                             fullWidth
                             label="Nombre del Repuesto *"
@@ -137,7 +137,7 @@ const RepuestoForm = ({ repuesto, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Cantidad Actual */}
-                    <Grid item xs={12} md={3}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                         <TextField
                             fullWidth
                             label="Cantidad Actual *"
@@ -152,7 +152,7 @@ const RepuestoForm = ({ repuesto, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Cantidad Mínima */}
-                    <Grid item xs={12} md={3}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                         <TextField
                             fullWidth
                             label="Cantidad Mínima *"
@@ -167,7 +167,7 @@ const RepuestoForm = ({ repuesto, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Ubicación */}
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <TextField
                             fullWidth
                             label="Ubicación en Almacén"
@@ -180,7 +180,7 @@ const RepuestoForm = ({ repuesto, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Vida Útil KM */}
-                    <Grid item xs={12} md={3}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                         <TextField
                             fullWidth
                             label="Vida Útil (km)"
@@ -195,7 +195,7 @@ const RepuestoForm = ({ repuesto, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Vida Útil Días */}
-                    <Grid item xs={12} md={3}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                         <TextField
                             fullWidth
                             label="Vida Útil (días)"
@@ -210,7 +210,7 @@ const RepuestoForm = ({ repuesto, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Descripción */}
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <TextField
                             fullWidth
                             label="Descripción"
@@ -225,7 +225,7 @@ const RepuestoForm = ({ repuesto, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Activo */}
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <FormControlLabel
                             control={
                                 <Switch

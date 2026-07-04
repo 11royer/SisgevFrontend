@@ -23,34 +23,43 @@ import SecurityIcon from '@mui/icons-material/Security';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import EscudoMiniatura from '../assets/escudo.webp';
+import useAuth from '../auth/UseAuth';
+import { hasPermission } from '../utils/hasPermission';
 
-// CONFIGURACIÓN DE ITEMS DEL MENÚ (Se mantiene intacto)
+// CONFIGURACIÓN DE ITEMS DEL MENÚ CON PERMISO REQUERIDO
 const menuItems = [
-  { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-  { text: 'Mi Perfil', icon: <AccountCircleIcon />, path: '/perfil' },
-  { text: 'Usuarios', icon: <PeopleIcon />, path: '/usuarios' },
-  { text: 'Roles', icon: <SecurityIcon />, path: '/roles' },
-  { text: 'Bitácora', icon: <AccessTimeIcon />, path: '/bitacora' },
-  { text: 'Vehículos', icon: <DirectionsCarIcon />, path: '/vehiculos' },
-  { text: 'Conductores', icon: <PeopleIcon />, path: '/conductores' },
-  { text: 'Asignaciones', icon: <AssignmentIcon />, path: '/asignaciones' },
-  { text: 'Mantenimientos', icon: <BuildIcon />, path: '/mantenimientos' },
-  { text: 'Repuestos', icon: <InventoryIcon />, path: '/repuestos' },
-  { text: 'Reportes', icon: <BarChartIcon />, path: '/reportes' },
+  { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard', permiso: null },
+  { text: 'Mi Perfil', icon: <AccountCircleIcon />, path: '/perfil', permiso: null },
+  { text: 'Usuarios', icon: <PeopleIcon />, path: '/usuarios', permiso: 'ver_usuarios' },
+  { text: 'Roles', icon: <SecurityIcon />, path: '/roles', permiso: 'gestionar_roles' },
+  { text: 'Bitácora', icon: <AccessTimeIcon />, path: '/bitacora', permiso: 'ver_bitacora' },
+  { text: 'Vehículos', icon: <DirectionsCarIcon />, path: '/vehiculos', permiso: 'ver_vehiculos' },
+  { text: 'Conductores', icon: <PeopleIcon />, path: '/conductores', permiso: 'ver_conductores' },
+  { text: 'Asignaciones', icon: <AssignmentIcon />, path: '/asignaciones', permiso: 'ver_asignaciones' },
+  { text: 'Mantenimientos', icon: <BuildIcon />, path: '/mantenimientos', permiso: 'ver_mantenimientos' },
+  { text: 'Repuestos', icon: <InventoryIcon />, path: '/repuestos', permiso: 'ver_repuestos' },
+  { text: 'Reportes', icon: <BarChartIcon />, path: '/reportes', permiso: 'ver_reportes' },
 ];
 
 export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle }) {
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  const { user: currentUser } = useAuth();
 
-  // 1. Detectamos si el modo actual es oscuro (luna) o claro (sol)
   const isDarkMode = theme.palette.mode === 'dark';
 
-  // CONTENIDO PRINCIPAL DEL DRAWER
+  const itemsPermitidos = menuItems.filter(item => {
+    // Si no requiere permiso, siempre visible (Dashboard, Perfil)
+    if (!item.permiso) return true;
+    // Verificar si el usuario tiene el permiso
+    return hasPermission(currentUser, item.permiso);
+  });
+
   const drawer = (
     <div>
-      {/* ENCABEZADO DEL SIDEBAR CON ESCUDO INCORPORADO */}
+      {/* ENCABEZADO DEL SIDEBAR */}
       <Toolbar sx={{
         minHeight: '4rem',
         borderBottom: `0.0625rem solid ${theme.palette.divider}`,
@@ -60,7 +69,6 @@ export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle })
         justifyContent: 'flex-start',
         paddingLeft: '1.25rem' 
       }}>
-        {/* Componente de Imagen para el Escudo de la Policía */}
         <Box
           component="img"
           src={EscudoMiniatura}
@@ -83,9 +91,9 @@ export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle })
         </Typography>
       </Toolbar>
 
-      {/* LISTA DE ITEMS DEL MENÚ */}
+      {/* LISTA DE ITEMS DEL MENÚ - SOLO LOS PERMITIDOS */}
       <List sx={{ pt: '0.5rem' }}>
-        {menuItems.map((item) => {
+        {itemsPermitidos.map((item) => {
           const isActive = location.pathname === item.path;
           
           return (
@@ -93,46 +101,38 @@ export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle })
               <ListItemButton
                 onClick={() => {
                   navigate(item.path);
-                  // CERRAR SIDEBAR EN MÓVIL AL SELECCIONAR
                   if (mobileOpen) {
                     handleDrawerToggle();
                   }
                 }}
                 sx={{
-                  // ESPACIADO Y MÁRGENES
                   margin: '0 0.75rem',
                   marginBottom: '0.25rem',
                   borderRadius: '0.5rem',
                   padding: '0.6rem 1rem',
-                  
-                  // COLOR SEGÚN ACTIVO/INACTIVO
                   backgroundColor: isActive
                     ? theme.palette.primary.dark
                     : 'transparent',
-                  
-                  // EFECTO HOVER ADAPTADO POR MODO
                   '&:hover': {
                     backgroundColor: isActive
                       ? theme.palette.primary.dark
                       : isDarkMode 
-                        ? 'rgba(255, 255, 255, 0.05)' // Modo Oscuro: hover claro sutil
-                        : 'rgba(0, 0, 0, 0.04)',     // Modo Claro: hover oscuro sutil
+                        ? 'rgba(255, 255, 255, 0.05)'
+                        : 'rgba(0, 0, 0, 0.04)',
                   }
                 }}
               >
-                {/* ICONO DEL ITEM - Contraste Dinámico según Sol/Luna */}
                 <ListItemIcon sx={{
                   color: isActive 
                     ? theme.palette.primary.light 
                     : isDarkMode 
-                      ? 'rgba(255, 255, 255, 0.6)'  // Modo Oscuro: Blanco traslúcido
-                      : 'rgba(0, 0, 0, 0.54)',      // Modo Claro: Gris oscuro/negro legible
+                      ? 'rgba(255, 255, 255, 0.6)'
+                      : 'rgba(0, 0, 0, 0.54)',
                   minWidth: '2.25rem'
                 }}>
                   {item.icon}
                 </ListItemIcon>
                 
-                {/* TEXTO DEL ITEM - Contraste Dinámico según Sol/Luna */}
                 <ListItemText 
                   primary={item.text} 
                   primaryTypographyProps={{
@@ -141,8 +141,8 @@ export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle })
                     color: isActive 
                       ? (isDarkMode ? '#ffffff' : theme.palette.primary.contrastText) 
                       : isDarkMode 
-                        ? 'rgba(255, 255, 255, 0.75)' // Modo Oscuro: Texto blanco legible
-                        : 'rgba(0, 0, 0, 0.87)'       // Modo Claro: Texto oscuro de alto contraste
+                        ? 'rgba(255, 255, 255, 0.75)'
+                        : 'rgba(0, 0, 0, 0.87)'
                   }}
                 />
               </ListItemButton>
@@ -155,7 +155,7 @@ export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle })
 
   return (
     <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
-      {/* VERSIÓN MÓVIL - TEMPORAL */}
+      {/* VERSIÓN MÓVIL */}
       <Drawer
         variant="temporary"
         open={mobileOpen}
@@ -173,7 +173,7 @@ export default function Sidebar({ drawerWidth, mobileOpen, handleDrawerToggle })
         {drawer}
       </Drawer>
 
-      {/* VERSIÓN ESCRITORIO - PERMANENTE */}
+      {/* VERSIÓN ESCRITORIO */}
       <Drawer
         variant="permanent"
         sx={{

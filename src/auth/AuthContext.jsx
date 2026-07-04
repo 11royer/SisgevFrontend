@@ -6,11 +6,10 @@ export const AuthProvider = ({ children }) => {
   // Estados para almacenar el token, el usuario y si el sistema está cargando
   const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(!!token); // Si hay token, empezamos cargando
+  const [loading, setLoading] = useState(!!token);
 
   // Función para obtener los datos del usuario desde Laravel
   const cargarUsuario = useCallback(async () => {
-    // Si no hay token, no tiene sentido preguntar al servidor
     if (!token) {
       setLoading(false);
       return;
@@ -18,33 +17,46 @@ export const AuthProvider = ({ children }) => {
 
     try {
       setLoading(true);
-      // Petición a la ruta de perfil (asegúrate que en Laravel sea /api/me)
       const res = await api.get('/me');
-      setUser(res.data.data || res.data);
+      
+      // OBTENER DATOS DEL USUARIO
+      const userData = res.data.data || res.data;
+      
+      // GUARDAR USUARIO CON PERMISOS A NIVEL RAIZ
+      setUser({
+        ...userData,
+        permisos: userData.rol?.permisos || []
+      });
+      
     } catch (err) {
       console.error('Error al recuperar usuario:', err);
-      // Si el servidor dice que el token no vale (401), cerramos sesión
       if (err.response?.status === 401) logout();
     } finally {
-      // Terminamos el estado de carga independientemente del resultado
       setLoading(false);
     }
   }, [token]);
 
-  // Se ejecuta cada vez que el token cambia
   useEffect(() => {
     cargarUsuario();
   }, [cargarUsuario]);
 
   // Función para iniciar sesión
   const login = async ({ credencial, contraseña }) => {
-    // Enviamos datos al backend
     const res = await api.post('/login', { credencial, contraseña });
     const nuevoToken = res.data.token;
     
-    // Guardamos en LocalStorage y en el estado de React
     localStorage.setItem('token', nuevoToken);
     setToken(nuevoToken);
+    
+    // Si el login devuelve el usuario con permisos, lo guardamos
+    if (res.data.usuario) {
+      const userData = res.data.usuario;
+      setUser({
+        ...userData,
+        permisos: userData.rol?.permisos || []
+      });
+    }
+    
     return res;
   };
 
@@ -55,7 +67,6 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  // Proveemos los datos y funciones a toda la aplicación
   return (
     <AuthContext.Provider value={{ token, user, loading, login, logout, cargarUsuario }}>
       {children}

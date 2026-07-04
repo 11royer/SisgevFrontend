@@ -1,4 +1,3 @@
-// src/components/usuarios/UsuarioForm.jsx
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -26,6 +25,7 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
     usuario: usuario?.usuario || '',
     email: usuario?.email || '',
     telefono: usuario?.telefono || '',
+    cargo: usuario?.cargo || '',
     id_rol: usuario?.id_rol || '', 
     contraseña: '', //Evita error de 'uncontrolled input' y permite editar
   });
@@ -71,7 +71,7 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
         <Grid container spacing="1.5rem">
           
           {/* Campo: Nombre Completo */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="Nombre Completo"
@@ -84,7 +84,7 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
           </Grid>
 
           {/* Campo: Usuario */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="Nombre de Usuario (Acceso)"
@@ -96,8 +96,21 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
             />
           </Grid>
 
+          {/* campo: Cargo */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <TextField
+              fullWidth
+              label="Cargo / Función"
+              name="cargo"
+              value={formData.cargo}
+              onChange={handleChange}
+              size="small"
+              placeholder="Ej: Comandante, Jefe de Unidad, Oficial..."
+            />
+          </Grid>
+
           {/* Campo: Email */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="Correo Institucional"
@@ -111,7 +124,7 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
           </Grid>
 
           {/* Campo: Rol - DINÁMICO */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <FormControl fullWidth size="small" required>
               <InputLabel>Asignar Rol</InputLabel>
               <Select
@@ -139,7 +152,7 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
           </Grid>
 
           {/* Campo: Teléfono */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="Teléfono/Celular"
@@ -153,7 +166,7 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
           {/*  SECCIÓN DE CONTRASEÑA 
              Ahora siempre visible, pero opcional si estamos editando.
           */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               // Cambiamos el label dependiendo si es nuevo o edición

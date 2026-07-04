@@ -27,6 +27,7 @@ import Layout from '../../layout/Layout';
 import ConductorTable from '../../components/conductores/ConductorTable';
 import { useConductores } from '../../hooks/useConductores';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission, hasAnyPermission } from '../../utils/hasPermission';
 
 const ConductoresPage = () => {
     const navigate = useNavigate();
@@ -51,9 +52,17 @@ const ConductoresPage = () => {
         estado: '',
     });
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
+
+    const puedeCrear = hasPermission(currentUser, 'crear_conductores');
+    const puedeEditar = hasPermission(currentUser, 'editar_conductores');
+    const puedeEliminar = hasPermission(currentUser, 'eliminar_conductores');
     
-    // Verificar permisos para escritura
-    const puedeEscribir = ['Administrador', 'Operador'].includes(currentUser?.rol?.nombre);
+    // Para acciones que requieren cualquiera de estos permisos
+    const puedeEscribir = hasAnyPermission(currentUser, [
+        'crear_conductores',
+        'editar_conductores',
+        'eliminar_conductores'
+    ]);
 
     // Sincronizar filtros locales con los aplicados
     useEffect(() => {
@@ -127,11 +136,13 @@ const ConductoresPage = () => {
                     </Typography>
                     <Box sx={{ display: 'flex', gap: '1rem' }}>
                         <Tooltip title="Refrescar">
-                            <IconButton onClick={handleRefresh} disabled={loading}>
-                                <RefreshIcon />
-                            </IconButton>
+                            <span>
+                                <IconButton onClick={handleRefresh} disabled={loading}>
+                                    <RefreshIcon />
+                                </IconButton>
+                            </span>
                         </Tooltip>
-                        {puedeEscribir && (
+                        {puedeCrear && (
                             <Button
                                 variant="contained"
                                 startIcon={<AddIcon />}
@@ -168,10 +179,10 @@ const ConductoresPage = () => {
                     </Typography>
                 </Alert>
 
-                {/* Barra de búsqueda */}
+                {/* BARRA DE BÚSQUEDA */}
                 <Paper elevation={2} sx={{ p: '1rem', mb: '1.5rem', borderRadius: '0.5rem' }}>
                     <Grid container spacing="1rem" alignItems="center">
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <TextField
                                 fullWidth
                                 placeholder="Buscar por nombre, CI o licencia..."
@@ -188,7 +199,7 @@ const ConductoresPage = () => {
                                 onKeyPress={(e) => e.key === 'Enter' && handleAplicarFiltros()}
                             />
                         </Grid>
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Box sx={{ display: 'flex', gap: '1rem' }}>
                                 <Button
                                     variant="outlined"
@@ -221,7 +232,7 @@ const ConductoresPage = () => {
                     {mostrarFiltros && (
                         <Box sx={{ mt: '1.5rem', pt: '1rem', borderTop: '1px solid', borderColor: 'divider' }}>
                             <Grid container spacing="1rem">
-                                <Grid item xs={12} md={4}>
+                                <Grid size={{ xs: 12, md: 4 }}>
                                     <FormControl fullWidth size="small">
                                         <InputLabel>Estado</InputLabel>
                                         <Select
@@ -244,12 +255,14 @@ const ConductoresPage = () => {
                 <ConductorTable
                     conductores={conductores}
                     loading={loading}
-                    onEdit={puedeEscribir ? handleEditarConductor : null}
-                    onDelete={puedeEscribir ? handleEliminarConductor : null}
+                    onEdit={puedeEditar ? handleEditarConductor : null}
+                    onDelete={puedeEliminar ? handleEliminarConductor : null}
                     onView={handleVerDetalle}
                     onHistory={handleVerHistorial}
                     pagination={pagination}
                     onPageChange={cambiarPagina}
+                    puedeEditar={puedeEditar}
+                    puedeEliminar={puedeEliminar}
                 />
             </Box>
         </Layout>

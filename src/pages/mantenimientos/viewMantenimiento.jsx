@@ -48,6 +48,7 @@ import { salidaRepuestoService } from '../../services/SalidaRepuestoService';
 import { repuestoService } from '../../services/RepuestoService';
 import EstadoMantenimientoBadge from '../../components/mantenimientos/EstadoMantenimientoBadge';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission } from '../../utils/hasPermission';
 
 const ViewMantenimiento = () => {
     const { id } = useParams();
@@ -70,9 +71,11 @@ const ViewMantenimiento = () => {
     // Estado para eliminar repuesto
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [salidaToDelete, setSalidaToDelete] = useState(null);
+    const puedeEditar = hasPermission(currentUser, 'editar_mantenimientos');
+    const puedeEliminar = hasPermission(currentUser, 'eliminar_mantenimientos');
+    const puedeCambiarEstado = hasPermission(currentUser, 'cambiar_estado_mantenimientos');
 
-    const puedeEditar = ['Administrador', 'Técnico'].includes(currentUser?.rol?.nombre);
-    const puedeFinalizar = puedeEditar && mantenimiento && mantenimiento.estado_mantenimiento !== 'finalizado';
+    const puedeFinalizar = puedeCambiarEstado && mantenimiento && mantenimiento.estado_mantenimiento !== 'finalizado';
 
     useEffect(() => {
         cargarDatos();
@@ -234,6 +237,7 @@ const ViewMantenimiento = () => {
                         />
                         <EstadoMantenimientoBadge estado={mantenimiento.estado_mantenimiento} />
                     </Box>
+                    {/* BOTÓN EDITAR - SOLO SI TIENE PERMISO */}
                     {puedeEditar && (
                         <Button variant="contained" startIcon={<EditIcon />} onClick={handleEditar}>
                             Editar Mantenimiento
@@ -241,11 +245,11 @@ const ViewMantenimiento = () => {
                     )}
                 </Box>
 
-                {/* Información principal */}
+                {/* INFORMACIÓN PRINCIPAL */}
                 <Paper elevation={3} sx={{ p: '1.5rem', mb: '1.5rem', borderRadius: '0.75rem' }}>
                     <Grid container spacing="3rem">
                         {/* Vehículo */}
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold', color: 'primary.main' }}>
                                 <DirectionsCarIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                                 Vehículo
@@ -263,7 +267,7 @@ const ViewMantenimiento = () => {
                         </Grid>
 
                         {/* Técnico */}
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold', color: 'primary.main' }}>
                                 <PersonIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                                 Técnico Responsable
@@ -281,42 +285,42 @@ const ViewMantenimiento = () => {
                         </Grid>
 
                         {/* Detalles del mantenimiento */}
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Divider sx={{ my: '1rem' }} />
                             <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold', color: 'primary.main' }}>
                                 <BuildIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                                 Detalles del Servicio
                             </Typography>
                             <Grid container spacing="2rem">
-                                <Grid item xs={12} sm={6} md={3}>
+                                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                     <Typography variant="caption" color="text.secondary">Fecha</Typography>
                                     <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', mt: 0.5 }}>
                                         <CalendarTodayIcon fontSize="small" color="action" />
                                         {mantenimiento.fecha_formateada || new Date(mantenimiento.fecha).toLocaleDateString()}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={6} md={3}>
+                                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                     <Typography variant="caption" color="text.secondary">Kilometraje</Typography>
                                     <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', mt: 0.5 }}>
                                         <SpeedIcon fontSize="small" color="action" />
                                         {mantenimiento.km_mantenimiento?.toLocaleString()} km
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={6} md={3}>
+                                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                     <Typography variant="caption" color="text.secondary">Costo</Typography>
                                     <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', mt: 0.5 }}>
                                         <AttachMoneyIcon fontSize="small" color="action" />
                                         {mantenimiento.costo_formateado || `Bs. ${mantenimiento.costo?.toLocaleString() || 0}`}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12}>
+                                <Grid size={{ xs: 12 }}>
                                     <Typography variant="caption" color="text.secondary">Descripción</Typography>
                                     <Paper variant="outlined" sx={{ p: '0.75rem', bgcolor: 'action.hover', mt: 0.5 }}>
                                         <Typography variant="body2">{mantenimiento.descripcion}</Typography>
                                     </Paper>
                                 </Grid>
                                 {mantenimiento.observaciones && (
-                                    <Grid item xs={12}>
+                                    <Grid size={{ xs: 12 }}>
                                         <Typography variant="caption" color="text.secondary">Observaciones</Typography>
                                         <Paper variant="outlined" sx={{ p: '0.75rem', bgcolor: 'action.hover', mt: 0.5 }}>
                                             <Typography variant="body2">{mantenimiento.observaciones}</Typography>
@@ -347,6 +351,7 @@ const ViewMantenimiento = () => {
                                 <Chip label={`${salidas.length} repuesto(s)`} size="small" />
                             )}
                         </Typography>
+                        {/* BOTÓN AGREGAR REPUESTO - SOLO SI TIENE PERMISO */}
                         {puedeEditar && (
                             <Button
                                 variant="outlined"
@@ -386,6 +391,7 @@ const ViewMantenimiento = () => {
                                         <TableCell sx={{ fontWeight: 'bold' }}>Repuesto</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold' }} align="center">Cantidad</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold' }}>Fecha</TableCell>
+                                        {/* COLUMNA ACCIONES - SOLO SI TIENE PERMISO */}
                                         {puedeEditar && <TableCell sx={{ fontWeight: 'bold' }} align="center">Acciones</TableCell>}
                                     </TableRow>
                                 </TableHead>
@@ -420,6 +426,7 @@ const ViewMantenimiento = () => {
                                                     {new Date(salida.fecha).toLocaleDateString()}
                                                 </Typography>
                                             </TableCell>
+                                            {/* ✅ BOTÓN ELIMINAR - SOLO SI TIENE PERMISO */}
                                             {puedeEditar && (
                                                 <TableCell align="center">
                                                     <IconButton

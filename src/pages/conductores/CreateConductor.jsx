@@ -7,6 +7,7 @@ import Layout from '../../layout/Layout';
 import ConductorForm from '../../components/conductores/ConductorForm';
 import { conductorService } from '../../services/ConductorService';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission } from '../../utils/hasPermission';
 
 const CreateConductor = () => {
     const navigate = useNavigate();
@@ -16,11 +17,15 @@ const CreateConductor = () => {
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
 
-    // Verificar permisos
-    if (!['Administrador', 'Operador'].includes(currentUser?.rol?.nombre)) {
+    const puedeCrear = hasPermission(currentUser, 'crear_conductores');
+
+    if (!puedeCrear) {
         return (
             <Layout>
-                <Alert severity="error" sx={{ m: 2 }}>No tienes permisos para registrar conductores.</Alert>
+                <Alert severity="error" sx={{ m: 2 }}>
+                    No tienes permisos para registrar conductores.
+                    Se requiere el permiso: <strong>crear_conductores</strong>
+                </Alert>
             </Layout>
         );
     }

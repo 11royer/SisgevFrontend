@@ -26,11 +26,30 @@ import Layout from '../../layout/Layout';
 import { reporteService } from '../../services/ReporteService';
 import DownloadIcon from '@mui/icons-material/Download';
 import SearchIcon from '@mui/icons-material/Search';
+import useAuth from '../../auth/UseAuth';
+import { hasPermission, hasAnyPermission } from '../../utils/hasPermission';
 
 const ReportesPage = () => {
     const location = useLocation();
     const theme = useTheme();
+    const { user: currentUser } = useAuth();
     
+    // PERMISOS - CONTROL DE ACCESO A REPORTES
+    const puedeVerReportes = hasPermission(currentUser, 'ver_reportes');
+    const puedeExportarReportes = hasPermission(currentUser, 'exportar_reportes');
+
+    // Si no tiene permiso para ver reportes, mostrar mensaje de error
+    if (!puedeVerReportes) {
+        return (
+            <Layout>
+                <Alert severity="error" sx={{ m: 2 }}>
+                    No tienes permisos para acceder a los reportes.
+                    Se requiere el permiso: <strong>ver_reportes</strong>
+                </Alert>
+            </Layout>
+        );
+    }
+
     const [tipoReporte, setTipoReporte] = useState('vehiculos');
     const [filtros, setFiltros] = useState({
         estado_operativo: '',
@@ -110,8 +129,14 @@ const ReportesPage = () => {
         }
     };
     
-    // Función de exportación que filtra parámetros vacíos
+    // Función de exportación - Controlada por permiso
     const handleExportarCSV = () => {
+        // Verificar si tiene permiso para exportar
+        if (!puedeExportarReportes) {
+            setError('No tienes permisos para exportar reportes. Se requiere el permiso: exportar_reportes');
+            return;
+        }
+        
         // Crear objeto con solo los filtros que tienen valor
         const filtrosExport = {};
         
@@ -147,16 +172,26 @@ const ReportesPage = () => {
                     Reportes
                 </Typography>
                 
+                {/* NOTA INFORMATIVA SOBRE PERMISOS */}
+                <Alert severity="info" sx={{ mb: 2, borderRadius: '0.75rem' }}>
+                    <Typography variant="body2">
+                        📊 Genera reportes de vehículos, mantenimientos y repuestos con stock bajo. 
+                        {puedeExportarReportes 
+                            ? ' Puedes exportar los resultados a CSV.' 
+                            : ' No tienes permisos para exportar reportes.'}
+                    </Typography>
+                </Alert>
+                
                 {error && (
-                    <Alert severity="error" sx={{ mb: 2, borderRadius: '0.75rem' }}>
+                    <Alert severity="error" sx={{ mb: 2, borderRadius: '0.75rem' }} onClose={() => setError(null)}>
                         {error}
                     </Alert>
                 )}
                 
-                {/* Panel de Filtros */}
+                {/* PANEL DE FILTROS */}
                 <Paper elevation={2} sx={{ p: 2, mb: 2, borderRadius: '0.75rem' }}>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} md={3}>
+                        <Grid size={{ xs: 12, md: 3 }}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Tipo de Reporte</InputLabel>
                                 <Select
@@ -173,7 +208,7 @@ const ReportesPage = () => {
                         
                         {tipoReporte === 'vehiculos' && (
                             <>
-                                <Grid item xs={12} md={3}>
+                                <Grid size={{ xs: 12, md: 3 }}>
                                     <FormControl fullWidth size="small">
                                         <InputLabel>Estado Operativo</InputLabel>
                                         <Select
@@ -187,7 +222,7 @@ const ReportesPage = () => {
                                         </Select>
                                     </FormControl>
                                 </Grid>
-                                <Grid item xs={12} md={3}>
+                                <Grid size={{ xs: 12, md: 3 }}>
                                     <TextField
                                         fullWidth
                                         label="Distrito"
@@ -201,7 +236,7 @@ const ReportesPage = () => {
         
                         {tipoReporte === 'mantenimientos' && (
                             <>
-                                <Grid item xs={12} md={3}>
+                                <Grid size={{ xs: 12, md: 3 }}>
                                     <FormControl fullWidth size="small">
                                         <InputLabel>Tipo</InputLabel>
                                         <Select
@@ -215,7 +250,7 @@ const ReportesPage = () => {
                                         </Select>
                                     </FormControl>
                                 </Grid>
-                                <Grid item xs={12} md={3}>
+                                <Grid size={{ xs: 12, md: 3 }}>
                                     <TextField
                                         fullWidth
                                         label="Fecha Desde"
@@ -226,7 +261,7 @@ const ReportesPage = () => {
                                         InputLabelProps={{ shrink: true }}
                                     />
                                 </Grid>
-                                <Grid item xs={12} md={3}>
+                                <Grid size={{ xs: 12, md: 3 }}>
                                     <TextField
                                         fullWidth
                                         label="Fecha Hasta"
@@ -240,7 +275,7 @@ const ReportesPage = () => {
                             </>
                         )}
                         
-                        <Grid item xs={12} md={tipoReporte === 'vehiculos' ? 3 : 3}>
+                        <Grid size={{ xs: 12, md: tipoReporte === 'vehiculos' ? 3 : 3 }}>
                             <Button
                                 fullWidth
                                 variant="contained"
@@ -277,15 +312,18 @@ const ReportesPage = () => {
                                     Generado: {reporte.fecha_generacion} | Total: {reporte.total} registros
                                 </Typography>
                             </Box>
-                            <Button
-                                variant="outlined"
-                                startIcon={<DownloadIcon />}
-                                onClick={handleExportarCSV}
-                                size="small"
-                                sx={{ borderRadius: '0.5rem' }}
-                            >
-                                Exportar CSV
-                            </Button>
+                            {/* BOTÓN EXPORTAR - SOLO SI TIENE PERMISO */}
+                            {puedeExportarReportes && (
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<DownloadIcon />}
+                                    onClick={handleExportarCSV}
+                                    size="small"
+                                    sx={{ borderRadius: '0.5rem' }}
+                                >
+                                    Exportar CSV
+                                </Button>
+                            )}
                         </Box>
                         
                         {reporte.resumen && Object.keys(reporte.resumen).length > 0 && (

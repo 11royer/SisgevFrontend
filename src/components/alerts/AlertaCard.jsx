@@ -7,6 +7,7 @@ import {
     Chip,
     IconButton,
     useTheme,
+    Tooltip,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import WarningIcon from '@mui/icons-material/Warning';
@@ -14,8 +15,16 @@ import InfoIcon from '@mui/icons-material/Info';
 import ErrorIcon from '@mui/icons-material/Error';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 
+// IMPORTAR HELPER DE PERMISOS Y HOOK DE AUTENTICACIÓN
+import useAuth from '../../auth/UseAuth';
+import { hasPermission } from '../../utils/hasPermission';
+
 const AlertaCard = ({ alerta, onClose }) => {
     const theme = useTheme();
+    const { user: currentUser } = useAuth();
+    
+    // PERMISO PARA CERRAR/MARCAR ALERTA COMO VISTA
+    const puedeCerrarAlerta = hasPermission(currentUser, 'ver_alertas');
     
     const getIcon = () => {
         switch (alerta.nivel) {
@@ -99,15 +108,21 @@ const AlertaCard = ({ alerta, onClose }) => {
                             </Typography>
                         )}
                     </Box>
-                    <IconButton 
-                        size="small" 
-                        onClick={() => onClose(alerta.id)}
-                        sx={{ 
-                            '&:hover': { backgroundColor: 'action.hover' }
-                        }}
-                    >
-                        <CloseIcon fontSize="small" />
-                    </IconButton>
+                    
+                    {/* BOTÓN CERRAR - SOLO SI TIENE PERMISO PARA VER ALERTAS */}
+                    {puedeCerrarAlerta && onClose && (
+                        <Tooltip title="Marcar como vista">
+                            <IconButton 
+                                size="small" 
+                                onClick={() => onClose(alerta.id)}
+                                sx={{ 
+                                    '&:hover': { backgroundColor: 'action.hover' }
+                                }}
+                            >
+                                <CloseIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    )}
                 </Box>
             </CardContent>
         </Card>

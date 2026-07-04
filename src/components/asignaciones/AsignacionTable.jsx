@@ -24,8 +24,7 @@ import EstadoAsignacionBadge from './EstadoAsignacionBadge';
 
 /**
  * Tabla de asignaciones
- * @param {Object} props
- */
+*/
 const AsignacionTable = ({
     asignaciones,
     loading,
@@ -35,6 +34,10 @@ const AsignacionTable = ({
     onFinalizar,
     pagination,
     onPageChange,
+    // RECIBIR PERMISOS COMO PROPS
+    puedeFinalizar = false,
+    puedeEliminar = false,
+    puedeEditar = false,
 }) => {
     const handleChangePage = (event, newPage) => {
         onPageChange(newPage + 1);
@@ -135,9 +138,11 @@ const AsignacionTable = ({
                                         </Typography>
                                         {asignacion.observaciones && (
                                             <Tooltip title={asignacion.observaciones}>
-                                                <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 150 }}>
-                                                    {asignacion.observaciones}
-                                                </Typography>
+                                                <span>
+                                                    <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 150 }}>
+                                                        {asignacion.observaciones}
+                                                    </Typography>
+                                                </span>
                                             </Tooltip>
                                         )}
                                     </TableCell>
@@ -147,64 +152,78 @@ const AsignacionTable = ({
                                         <EstadoAsignacionBadge esActiva={esActiva} />
                                     </TableCell>
 
-                                    {/* Acciones */}
+                                    {/* ACCIONES - CONTROLADAS POR PERMISOS con span wrapper */}
                                     <TableCell sx={{ textAlign: 'center' }}>
                                         <Box sx={{ display: 'flex', justifyContent: 'center', gap: '0.25rem' }}>
+                                            {/* VER - Siempre visible */}
                                             <Tooltip title="Ver detalles">
-                                                <IconButton
-                                                    size="small"
-                                                    color="primary"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onView(asignacion);
-                                                    }}
-                                                >
-                                                    <VisibilityIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
-
-                                            {esActiva && (
-                                                <Tooltip title="Finalizar asignación">
-                                                    <IconButton
-                                                        size="small"
-                                                        color="success"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            onFinalizar(asignacion);
-                                                        }}
-                                                    >
-                                                        <CheckCircleIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            )}
-
-                                            {!esActiva && (
-                                                <Tooltip title="Editar">
+                                                <span>
                                                     <IconButton
                                                         size="small"
                                                         color="primary"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            onEdit(asignacion);
+                                                            onView(asignacion);
                                                         }}
                                                     >
-                                                        <EditIcon fontSize="small" />
+                                                        <VisibilityIcon fontSize="small" />
                                                     </IconButton>
+                                                </span>
+                                            </Tooltip>
+
+                                            {/* FINALIZAR - Solo si está activa Y tiene permiso */}
+                                            {esActiva && puedeFinalizar && onFinalizar && (
+                                                <Tooltip title="Finalizar asignación">
+                                                    <span>
+                                                        <IconButton
+                                                            size="small"
+                                                            color="success"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onFinalizar(asignacion);
+                                                            }}
+                                                        >
+                                                            <CheckCircleIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </span>
                                                 </Tooltip>
                                             )}
 
-                                            <Tooltip title="Eliminar">
-                                                <IconButton
-                                                    size="small"
-                                                    color="error"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onDelete(asignacion);
-                                                    }}
-                                                >
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
-                                            </Tooltip>
+                                            {/* EDITAR - Solo si está finalizada Y tiene permiso */}
+                                            {!esActiva && puedeEditar && onEdit && (
+                                                <Tooltip title="Editar">
+                                                    <span>
+                                                        <IconButton
+                                                            size="small"
+                                                            color="primary"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onEdit(asignacion);
+                                                            }}
+                                                        >
+                                                            <EditIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </span>
+                                                </Tooltip>
+                                            )}
+
+                                            {/* ELIMINAR - Solo si tiene permiso */}
+                                            {puedeEliminar && onDelete && (
+                                                <Tooltip title="Eliminar">
+                                                    <span>
+                                                        <IconButton
+                                                            size="small"
+                                                            color="error"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onDelete(asignacion);
+                                                            }}
+                                                        >
+                                                            <DeleteIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </span>
+                                                </Tooltip>
+                                            )}
                                         </Box>
                                     </TableCell>
                                 </TableRow>

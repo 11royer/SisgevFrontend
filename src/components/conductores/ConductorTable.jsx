@@ -24,15 +24,6 @@ import BadgeIcon from '@mui/icons-material/Badge';
 
 /**
  * Tabla de conductores con acciones CRUD
- * @param {Object} props
- * @param {Array} props.conductores - Lista de conductores
- * @param {boolean} props.loading - Estado de carga
- * @param {Function} props.onEdit - Función para editar
- * @param {Function} props.onDelete - Función para eliminar
- * @param {Function} props.onView - Función para ver detalle
- * @param {Function} props.onHistory - Función para ver historial
- * @param {Object} props.pagination - Datos de paginación
- * @param {Function} props.onPageChange - Cambiar página
  */
 const ConductorTable = ({
     conductores,
@@ -43,6 +34,9 @@ const ConductorTable = ({
     onHistory,
     pagination,
     onPageChange,
+    // RECIBIR PERMISOS COMO PROPS
+    puedeEditar = false,
+    puedeEliminar = false,
 }) => {
     const handleChangePage = (event, newPage) => {
         onPageChange(newPage + 1); // MUI usa base 0, backend base 1
@@ -148,60 +142,76 @@ const ConductorTable = ({
                                     </Typography>
                                 </TableCell>
 
-                                {/* Columna: Acciones */}
+                                {/* CONTROLADAS POR PERMISOS (via props) con span wrapper */}
                                 <TableCell sx={{ textAlign: 'center' }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: '0.25rem' }}>
+                                        {/* VER - Siempre visible */}
                                         <Tooltip title="Ver detalles">
-                                            <IconButton
-                                                size="small"
-                                                color="primary"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onView(conductor);
-                                                }}
-                                            >
-                                                <VisibilityIcon fontSize="small" />
-                                            </IconButton>
+                                            <span> 
+                                                <IconButton
+                                                    size="small"
+                                                    color="primary"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onView(conductor);
+                                                    }}
+                                                >
+                                                    <VisibilityIcon fontSize="small" />
+                                                </IconButton>
+                                            </span>
                                         </Tooltip>
                                         
+                                        {/* HISTORIAL - Siempre visible */}
                                         <Tooltip title="Historial de asignaciones">
-                                            <IconButton
-                                                size="small"
-                                                color="info"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onHistory(conductor);
-                                                }}
-                                            >
-                                                <HistoryIcon fontSize="small" />
-                                            </IconButton>
+                                            <span>
+                                                <IconButton
+                                                    size="small"
+                                                    color="info"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onHistory(conductor);
+                                                    }}
+                                                >
+                                                    <HistoryIcon fontSize="small" />
+                                                </IconButton>
+                                            </span>
                                         </Tooltip>
                                         
-                                        <Tooltip title="Editar">
-                                            <IconButton
-                                                size="small"
-                                                color="primary"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onEdit(conductor);
-                                                }}
-                                            >
-                                                <EditIcon fontSize="small" />
-                                            </IconButton>
-                                        </Tooltip>
+                                        {/* EDITAR - Solo si tiene permiso */}
+                                        {puedeEditar && onEdit && (
+                                            <Tooltip title="Editar">
+                                                <span>
+                                                    <IconButton
+                                                        size="small"
+                                                        color="primary"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onEdit(conductor);
+                                                        }}
+                                                    >
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                </span>
+                                            </Tooltip>
+                                        )}
                                         
-                                        <Tooltip title={conductor.estado ? 'Desactivar' : 'Activar'}>
-                                            <IconButton
-                                                size="small"
-                                                color={conductor.estado ? 'error' : 'success'}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onDelete(conductor);
-                                                }}
-                                            >
-                                                <DeleteIcon fontSize="small" />
-                                            </IconButton>
-                                        </Tooltip>
+                                        {/* ELIMINAR - Solo si tiene permiso */}
+                                        {puedeEliminar && onDelete && (
+                                            <Tooltip title={conductor.estado ? 'Desactivar' : 'Activar'}>
+                                                <span>
+                                                    <IconButton
+                                                        size="small"
+                                                        color={conductor.estado ? 'error' : 'success'}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onDelete(conductor);
+                                                        }}
+                                                    >
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </span>
+                                            </Tooltip>
+                                        )}
                                     </Box>
                                 </TableCell>
                             </TableRow>

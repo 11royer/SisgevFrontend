@@ -13,25 +13,25 @@ import Layout from '../../layout/Layout';
 import VehiculoForm from '../../components/vehiculos/VehiculoForm';
 import { vehiculoService } from '../../services/VehiculoService';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission } from '../../utils/hasPermission';
 
 const EditVehiculo = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-  
   const [vehiculo, setVehiculo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  const puedeEditar = hasPermission(currentUser, 'editar_vehiculos');
 
-  // Verificar permisos
-  const rolesPermitidos = ['Administrador', 'Operador'];
-  if (!rolesPermitidos.includes(currentUser?.rol?.nombre)) {
+  if (!puedeEditar) {
     return (
       <Layout>
         <Alert severity="error" sx={{ m: 2 }}>
           No tienes permisos para editar vehículos.
+          Se requiere el permiso: <strong>editar_vehiculos</strong>
         </Alert>
       </Layout>
     );

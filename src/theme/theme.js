@@ -1,7 +1,4 @@
-// src/theme/theme.js
 import { createTheme } from '@mui/material/styles';
-
-// --- PALETAS DE COLORES ---
 
 // Verde Policial - Identidad Institucional
 const policeGreen = {
@@ -26,7 +23,6 @@ const neutralColors = {
 };
 
 // --- CONFIGURACIÓN DEL TEMA ---
-
 export const getTheme = (mode = 'dark') => ({
   palette: {
     mode,

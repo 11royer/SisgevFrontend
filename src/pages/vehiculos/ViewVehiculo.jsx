@@ -40,8 +40,9 @@ import { vehiculoService } from '../../services/VehiculoService';
 import { formularioService } from '../../services/FormularioService';
 import FormulariosTab from '../../components/vehiculos/FormulariosTab';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission, hasAnyPermission } from '../../utils/hasPermission';
 
-// COMPONENTE: DocumentosTab
+// COMPONENTE: DocumentosTab (sin cambios en Grids, solo permisos)
 const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
     const [fotos, setFotos] = useState([]);
     const [documentos, setDocumentos] = useState([]);
@@ -51,7 +52,14 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
     const [success, setSuccess] = useState(null);
     const { user: currentUser } = useAuth();
 
-    const puedeEditar = ['Administrador', 'Operador'].includes(currentUser?.rol?.nombre);
+    const puedeSubirDocumentos = hasPermission(currentUser, 'subir_documentos');
+    const puedeEliminarDocumentos = hasPermission(currentUser, 'eliminar_documentos');
+    const puedeVerDocumentos = hasPermission(currentUser, 'ver_documentos');
+    
+    const puedeEditarDocumentos = hasAnyPermission(currentUser, [
+        'subir_documentos',
+        'eliminar_documentos'
+    ]);
 
     useEffect(() => {
         cargarDatos();
@@ -61,16 +69,8 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
         try {
             setLoading(true);
             setError(null);
-
-            // Cargar fotos del Kárdex
             const response = await formularioService.getByVehiculo(vehiculoId);
             setFotos(response.data.fotos || []);
-
-            // Aquí podrías cargar otros documentos (SOAT, ITV, etc.)
-            // si tienes un endpoint para ellos
-            // const docsResponse = await documentoService.getByVehiculo(vehiculoId);
-            // setDocumentos(docsResponse.data || []);
-
         } catch (error) {
             console.error('Error cargando documentos:', error);
             setError('Error al cargar los documentos');
@@ -82,12 +82,10 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
     const handleSubirFoto = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
-
         if (file.size > 2 * 1024 * 1024) {
             setError('La imagen no debe superar los 2MB');
             return;
         }
-
         try {
             setUploading(true);
             await formularioService.subirFotoKardex(vehiculoId, file);
@@ -104,7 +102,6 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
 
     const handleEliminarFoto = async (documentoId) => {
         if (!window.confirm('¿Eliminar esta foto del Kárdex?')) return;
-
         try {
             await formularioService.eliminarFotoKardex(documentoId);
             await cargarDatos();
@@ -132,6 +129,15 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
         }
     };
 
+    if (!puedeVerDocumentos) {
+        return (
+            <Alert severity="info" sx={{ borderRadius: '0.5rem' }}>
+                No tienes permisos para ver los documentos del vehículo.
+                Se requiere el permiso: <strong>ver_documentos</strong>
+            </Alert>
+        );
+    }
+
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -153,9 +159,6 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
                 </Alert>
             )}
 
-            {/*
-                SECCIÓN: KÁRDEX DEL MOTORIZADO - CON COLORES DEL TEMA
-                */}
             <Paper
                 elevation={2}
                 sx={{
@@ -196,7 +199,6 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
                     </Box>
                 </Box>
 
-                {/* Grid de Fotos */}
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 1 }}>
                     {fotos.map((foto) => (
                         <Box
@@ -217,7 +219,7 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
                                 alt={foto.descripcion || 'Foto del vehículo'}
                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
-                            {puedeEditar && (
+                            {puedeEliminarDocumentos && (
                                 <IconButton
                                     size="small"
                                     sx={{
@@ -253,7 +255,7 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
                         </Box>
                     ))}
 
-                    {fotos.length < 4 && puedeEditar && (
+                    {fotos.length < 4 && puedeSubirDocumentos && (
                         <Button
                             variant="outlined"
                             component="label"
@@ -295,21 +297,19 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
                 </Typography>
             </Paper>
 
-            {/*
-                SECCIÓN: OTROS DOCUMENTOS (SOAT, ITV, etc.)
-                */}
             <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2, color: 'text.primary' }}>
                 📄 Documentos del Vehículo
             </Typography>
 
             {documentos.length === 0 ? (
                 <Alert severity="info" sx={{ borderRadius: '0.5rem' }}>
-                    No hay documentos adicionales registrados. Puedes subir SOAT, ITV, facturas, etc.
+                    No hay documentos adicionales registrados. 
+                    {puedeSubirDocumentos && ' Puedes subir SOAT, ITV, facturas, etc.'}
                 </Alert>
             ) : (
                 <Grid container spacing={2}>
                     {documentos.map((doc) => (
-                        <Grid item xs={12} sm={6} md={4} key={doc.id}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={doc.id}>
                             <Paper variant="outlined" sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <DescriptionIcon color="primary" fontSize="large" />
                                 <Box>
@@ -336,10 +336,15 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
 const ViewVehiculo = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { user: currentUser } = useAuth();
     const [vehiculo, setVehiculo] = useState(null);
     const [historial, setHistorial] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState(0);
+
+    const puedeEditar = hasPermission(currentUser, 'editar_vehiculos');
+    const puedeVerDocumentos = hasPermission(currentUser, 'ver_documentos');
+    const puedeVerFormularios = hasPermission(currentUser, 'ver_formularios');
 
     useEffect(() => {
         cargarDatosVehiculo();
@@ -396,45 +401,53 @@ const ViewVehiculo = () => {
                         <Chip label={`Placa: ${vehiculo.placa}`} color="primary" variant="outlined" sx={{ fontWeight: 'bold' }} />
                         {vehiculo.sigla && <Chip label={`Sigla: ${vehiculo.sigla}`} color="secondary" variant="filled" size="small" />}
                     </Box>
-                    <Button variant="contained" startIcon={<EditIcon />} onClick={handleEditar}>
-                        Editar Vehículo
-                    </Button>
+                    {puedeEditar && (
+                        <Button variant="contained" startIcon={<EditIcon />} onClick={handleEditar}>
+                            Editar Vehículo
+                        </Button>
+                    )}
                 </Box>
 
                 {/* TARJETA DE INFORMACIÓN */}
                 <Paper elevation={3} sx={{ p: '1.5rem', mb: '1.5rem', borderRadius: '0.75rem' }}>
                     <Grid container spacing="2rem">
                         {/* Columna 1: Identificación y Técnica */}
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold', color: 'primary.main', borderBottom: '1px solid #eee' }}>
                                 Datos Técnicos e Identificación
                             </Typography>
                             <Grid container spacing="1rem">
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Nº Chasis (VIN)</Typography>
-                                    <Typography variant="body1" fontWeight="medium">{vehiculo.numero_chasis || 'No registrado'}</Typography>
+                                    <Typography variant="body1" fontWeight="medium">
+                                        {vehiculo.numero_chasis || 'No registrado'}
+                                    </Typography>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Nº Motor</Typography>
-                                    <Typography variant="body1" fontWeight="medium">{vehiculo.numero_motor || 'No registrado'}</Typography>
+                                    <Typography variant="body1" fontWeight="medium">
+                                        {vehiculo.numero_motor || 'No registrado'}
+                                    </Typography>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Marca / Modelo</Typography>
                                     <Typography variant="body1">{vehiculo.marca} {vehiculo.modelo}</Typography>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Año / Origen</Typography>
                                     <Typography variant="body1">{vehiculo.anio} - {vehiculo.origen || 'N/A'}</Typography>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Tipo / Color</Typography>
                                     <Typography variant="body1">{vehiculo.tipo} - {vehiculo.color}</Typography>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Motor / Capacidad</Typography>
-                                    <Typography variant="body1">{vehiculo.cilindrada ? `${vehiculo.cilindrada} cc` : 'N/A'} / {vehiculo.ocupantes} Pas.</Typography>
+                                    <Typography variant="body1">
+                                        {vehiculo.cilindrada ? `${vehiculo.cilindrada} cc` : 'N/A'} / {vehiculo.ocupantes} Pas.
+                                    </Typography>
                                 </Grid>
-                                <Grid item xs={12} md={4}>
+                                <Grid size={{ xs: 12, md: 4 }}>
                                     <Typography variant="caption" color="text.secondary">Clasificación</Typography>
                                     <Typography variant="body1">{vehiculo.clasificacion?.nombre || "Sin clasificación"}</Typography>
                                 </Grid>
@@ -442,20 +455,20 @@ const ViewVehiculo = () => {
                         </Grid>
 
                         {/* Columna 2: Estado y Logística */}
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold', color: 'primary.main', borderBottom: '1px solid #eee' }}>
                                 Ubicación y Estado Actual
                             </Typography>
                             <Grid container spacing="1rem">
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Estado Operativo</Typography>
                                     <Box mt={0.5}><EstadoBadge estado={vehiculo.estado_operativo} /></Box>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Condición Física</Typography>
                                     <Typography variant="body1" fontWeight="medium">{vehiculo.estado}</Typography>
                                 </Grid>
-                                <Grid item xs={12}>
+                                <Grid size={{ xs: 12 }}>
                                     <Typography variant="caption" color="text.secondary">Ubicación (Distrito - Unidad)</Typography>
                                     <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                         <LocationOnIcon fontSize="small" color="action" />
@@ -467,14 +480,14 @@ const ViewVehiculo = () => {
                                         </Typography>
                                     )}
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Kilometraje Actual</Typography>
                                     <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                         <SpeedIcon fontSize="small" color="action" />
                                         {vehiculo.kilometraje_actual?.toLocaleString()} km
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Fuente Recepción</Typography>
                                     <Typography variant="body1">{vehiculo.fuente_recepcion || 'Compra Regular'}</Typography>
                                 </Grid>
@@ -483,7 +496,7 @@ const ViewVehiculo = () => {
 
                         {/* Observaciones */}
                         {vehiculo.observaciones && (
-                            <Grid item xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Divider sx={{ my: '0.5rem' }} />
                                 <Typography variant="caption" color="text.secondary">Observaciones</Typography>
                                 <Paper variant="outlined" sx={{ p: '0.75rem', bgcolor: 'action.hover', mt: '0.25rem' }}>
@@ -494,7 +507,7 @@ const ViewVehiculo = () => {
                     </Grid>
                 </Paper>
 
-                {/* TABS: MANTENIMIENTOS | ASIGNACIONES | DOCUMENTOS | FORMULARIOS */}
+                {/* TABS  */}
                 <Paper elevation={3} sx={{ borderRadius: '0.75rem', overflow: 'hidden' }}>
                     <Tabs
                         value={activeTab}
@@ -505,12 +518,15 @@ const ViewVehiculo = () => {
                     >
                         <Tab label="Mantenimientos" icon={<BuildIcon />} iconPosition="start" />
                         <Tab label="Asignaciones" icon={<AssignmentIcon />} iconPosition="start" />
-                        <Tab label="Documentos" icon={<DescriptionIcon />} iconPosition="start" />
-                        <Tab label="Formularios" icon={<DescriptionIcon />} iconPosition="start" />
+                        {puedeVerDocumentos && (
+                            <Tab label="Documentos" icon={<DescriptionIcon />} iconPosition="start" />
+                        )}
+                        {puedeVerFormularios && (
+                            <Tab label="Formularios" icon={<DescriptionIcon />} iconPosition="start" />
+                        )}
                     </Tabs>
 
                     <Box sx={{ p: '1.5rem' }}>
-                        {/* PESTAÑA 0: MANTENIMIENTOS */}
                         {activeTab === 0 && (
                             <Box>
                                 <Typography variant="subtitle1" fontWeight="bold" mb={2}>Registros de Mantenimiento</Typography>
@@ -530,7 +546,6 @@ const ViewVehiculo = () => {
                             </Box>
                         )}
 
-                        {/* PESTAÑA 1: ASIGNACIONES */}
                         {activeTab === 1 && (
                             <Box>
                                 <Typography variant="subtitle1" fontWeight="bold" mb={2}>Historial de Asignaciones</Typography>
@@ -550,13 +565,11 @@ const ViewVehiculo = () => {
                             </Box>
                         )}
 
-                        {/* PESTAÑA 2: DOCUMENTOS ← KÁRDEX */}
-                        {activeTab === 2 && (
+                        {activeTab === 2 && puedeVerDocumentos && (
                             <DocumentosTab vehiculoId={vehiculo.id} vehiculoPlaca={vehiculo.placa} />
                         )}
 
-                        {/* PESTAÑA 3: FORMULARIOS */}
-                        {activeTab === 3 && (
+                        {activeTab === 3 && puedeVerFormularios && (
                             <FormulariosTab vehiculoId={vehiculo.id} vehiculoPlaca={vehiculo.placa} />
                         )}
                     </Box>

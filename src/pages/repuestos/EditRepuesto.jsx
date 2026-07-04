@@ -7,6 +7,7 @@ import Layout from '../../layout/Layout';
 import RepuestoForm from '../../components/repuestos/RepuestoForm';
 import { repuestoService } from '../../services/RepuestoService';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission } from '../../utils/hasPermission';
 
 const EditRepuesto = () => {
     const { id } = useParams();
@@ -18,11 +19,15 @@ const EditRepuesto = () => {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
+    const puedeEditar = hasPermission(currentUser, 'editar_repuestos');
 
-    if (!['Administrador', 'Técnico'].includes(currentUser?.rol?.nombre)) {
+    if (!puedeEditar) {
         return (
             <Layout>
-                <Alert severity="error" sx={{ m: 2 }}>No tienes permisos para editar repuestos.</Alert>
+                <Alert severity="error" sx={{ m: 2 }}>
+                    No tienes permisos para editar repuestos.
+                    Se requiere el permiso: <strong>editar_repuestos</strong>
+                </Alert>
             </Layout>
         );
     }

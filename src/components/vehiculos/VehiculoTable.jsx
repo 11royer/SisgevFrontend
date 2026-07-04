@@ -30,6 +30,8 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { useNavigate } from 'react-router-dom';
 import EstadoBadge from './EstadoBadge';
+import useAuth from '../../auth/UseAuth';
+import { hasPermission } from '../../utils/hasPermission';
 
 const VehiculoTable = ({
     vehiculos,
@@ -43,8 +45,16 @@ const VehiculoTable = ({
 }) => {
     const navigate = useNavigate();
     
+    // OBTENER USUARIO AUTENTICADO
+    const { user: currentUser } = useAuth();
+    
     const [anchorEl, setAnchorEl] = React.useState(null);
     const [selectedVehiculo, setSelectedVehiculo] = React.useState(null);
+
+    // VERIFICAR PERMISOS DEL USUARIO
+    const puedeEditar = hasPermission(currentUser, 'editar_vehiculos');
+    const puedeEliminar = hasPermission(currentUser, 'eliminar_vehiculos');
+    const puedeCambiarEstado = hasPermission(currentUser, 'cambiar_estado_vehiculos');
 
     const handleMenuOpen = (event, vehiculo) => {
         event.stopPropagation();
@@ -212,53 +222,67 @@ const VehiculoTable = ({
                                     </Box>
                                 </TableCell>
 
-                                {/* Acciones */}
+                                {/* CONTROLADAS POR PERMISOS con span wrapper para Tooltips */}
                                 <TableCell sx={{ textAlign: 'center' }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: '0.25rem' }}>
+                                        {/* VER DETALLE - Siempre visible (lectura) */}
                                         <Tooltip title="Ver detalles">
-                                            <IconButton
-                                                size="small"
-                                                color="primary"
-                                                onClick={(e) => { e.stopPropagation(); onView(vehiculo); }}
-                                            >
-                                                <VisibilityIcon fontSize="small" />
-                                            </IconButton>
-                                        </Tooltip>
-
-                                        <Tooltip title="Cambiar estado">
-                                            <IconButton
-                                                size="small"
-                                                color="info"
-                                                onClick={(e) => handleMenuOpen(e, vehiculo)}
-                                            >
-                                                <MoreVertIcon fontSize="small" />
-                                            </IconButton>
-                                        </Tooltip>
-
-                                        {onEdit && (
-                                            <Tooltip title="Editar">
+                                            <span>
                                                 <IconButton
                                                     size="small"
                                                     color="primary"
-                                                    onClick={(e) => { e.stopPropagation(); onEdit(vehiculo); }}
+                                                    onClick={(e) => { e.stopPropagation(); onView(vehiculo); }}
                                                 >
-                                                    <EditIcon fontSize="small" />
+                                                    <VisibilityIcon fontSize="small" />
                                                 </IconButton>
+                                            </span>
+                                        </Tooltip>
+
+                                        {/* CAMBIAR ESTADO - Solo si tiene permiso */}
+                                        {puedeCambiarEstado && (
+                                            <Tooltip title="Cambiar estado">
+                                                <span>
+                                                    <IconButton
+                                                        size="small"
+                                                        color="info"
+                                                        onClick={(e) => handleMenuOpen(e, vehiculo)}
+                                                    >
+                                                        <MoreVertIcon fontSize="small" />
+                                                    </IconButton>
+                                                </span>
                                             </Tooltip>
                                         )}
 
-                                        {onDelete && (
+                                        {/* EDITAR - Solo si tiene permiso */}
+                                        {puedeEditar && onEdit && (
+                                            <Tooltip title="Editar">
+                                                <span>
+                                                    <IconButton
+                                                        size="small"
+                                                        color="primary"
+                                                        onClick={(e) => { e.stopPropagation(); onEdit(vehiculo); }}
+                                                    >
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                </span>
+                                            </Tooltip>
+                                        )}
+
+                                        {/* ELIMINAR - Solo si tiene permiso */}
+                                        {puedeEliminar && onDelete && (
                                             <Tooltip title="Eliminar">
-                                                <IconButton
-                                                    size="small"
-                                                    color="error"
-                                                    onClick={(e) => { 
-                                                        e.stopPropagation(); 
-                                                        onDelete(vehiculo); 
-                                                    }}
-                                                >
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
+                                                <span>
+                                                    <IconButton
+                                                        size="small"
+                                                        color="error"
+                                                        onClick={(e) => { 
+                                                            e.stopPropagation(); 
+                                                            onDelete(vehiculo); 
+                                                        }}
+                                                    >
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </span>
                                             </Tooltip>
                                         )}
                                     </Box>
@@ -284,40 +308,42 @@ const VehiculoTable = ({
                 />
             )}
 
-            {/* Menú de cambio de estado */}
-            <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-            >
-                <Typography variant="caption" sx={{ px: 2, py: 1, color: 'text.secondary' }}>
-                    Cambiar estado operativo:
-                </Typography>
-                <MenuItem onClick={() => handleChangeEstado('Operativo')}>
-                    <ListItemIcon>
-                        <CheckCircleIcon fontSize="small" color="success" />
-                    </ListItemIcon>
-                    <ListItemText>Marcar como Operativo</ListItemText>
-                </MenuItem>
-                <MenuItem onClick={() => handleChangeEstado('En Taller')}>
-                    <ListItemIcon>
-                        <BuildIcon fontSize="small" color="warning" />
-                    </ListItemIcon>
-                    <ListItemText>Enviar a Taller</ListItemText>
-                </MenuItem>
-                <MenuItem onClick={() => handleChangeEstado('Inoperativo')}>
-                    <ListItemIcon>
-                        <CancelIcon fontSize="small" color="error" />
-                    </ListItemIcon>
-                    <ListItemText>Marcar como Inoperativo</ListItemText>
-                </MenuItem>
-                <MenuItem onClick={() => handleChangeEstado('Baja')}>
-                    <ListItemIcon>
-                        <CancelIcon fontSize="small" color="disabled" />
-                    </ListItemIcon>
-                    <ListItemText>Marcar como Baja</ListItemText>
-                </MenuItem>
-            </Menu>
+            {/* Menú de cambio de estado - Solo visible si tiene permiso */}
+            {puedeCambiarEstado && (
+                <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={handleMenuClose}
+                >
+                    <Typography variant="caption" sx={{ px: 2, py: 1, color: 'text.secondary' }}>
+                        Cambiar estado operativo:
+                    </Typography>
+                    <MenuItem onClick={() => handleChangeEstado('Operativo')}>
+                        <ListItemIcon>
+                            <CheckCircleIcon fontSize="small" color="success" />
+                        </ListItemIcon>
+                        <ListItemText>Marcar como Operativo</ListItemText>
+                    </MenuItem>
+                    <MenuItem onClick={() => handleChangeEstado('En Taller')}>
+                        <ListItemIcon>
+                            <BuildIcon fontSize="small" color="warning" />
+                        </ListItemIcon>
+                        <ListItemText>Enviar a Taller</ListItemText>
+                    </MenuItem>
+                    <MenuItem onClick={() => handleChangeEstado('Inoperativo')}>
+                        <ListItemIcon>
+                            <CancelIcon fontSize="small" color="error" />
+                        </ListItemIcon>
+                        <ListItemText>Marcar como Inoperativo</ListItemText>
+                    </MenuItem>
+                    <MenuItem onClick={() => handleChangeEstado('Baja')}>
+                        <ListItemIcon>
+                            <CancelIcon fontSize="small" color="disabled" />
+                        </ListItemIcon>
+                        <ListItemText>Marcar como Baja</ListItemText>
+                    </MenuItem>
+                </Menu>
+            )}
         </>
     );
 };

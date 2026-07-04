@@ -22,6 +22,9 @@ import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import EstadoMantenimientoBadge from './EstadoMantenimientoBadge';
 
+/**
+ * Tabla de mantenimientos con acciones CRUD
+ */
 const MantenimientoTable = ({
     mantenimientos,
     loading,
@@ -31,6 +34,10 @@ const MantenimientoTable = ({
     onCambiarEstado,
     pagination,
     onPageChange,
+    // RECIBIR PERMISOS COMO PROPS
+    puedeEditar = false,
+    puedeEliminar = false,
+    puedeCambiarEstado = false,
 }) => {
     const handleChangePage = (event, newPage) => {
         onPageChange(newPage + 1);
@@ -136,24 +143,60 @@ const MantenimientoTable = ({
                                     </Typography>
                                 </TableCell>
 
-                                {/* Acciones */}
+                                {/* CONTROLADAS POR PERMISOS con span wrapper */}
                                 <TableCell sx={{ textAlign: 'center' }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: '0.25rem' }}>
+                                        {/* VER - Siempre visible */}
                                         <Tooltip title="Ver detalles">
-                                            <IconButton size="small" color="primary" onClick={(e) => { e.stopPropagation(); onView(mantenimiento); }}>
-                                                <VisibilityIcon fontSize="small" />
-                                            </IconButton>
+                                            <span>
+                                                <IconButton 
+                                                    size="small" 
+                                                    color="primary" 
+                                                    onClick={(e) => { 
+                                                        e.stopPropagation(); 
+                                                        onView(mantenimiento); 
+                                                    }}
+                                                >
+                                                    <VisibilityIcon fontSize="small" />
+                                                </IconButton>
+                                            </span>
                                         </Tooltip>
-                                        <Tooltip title="Editar">
-                                            <IconButton size="small" color="primary" onClick={(e) => { e.stopPropagation(); onEdit(mantenimiento); }}>
-                                                <EditIcon fontSize="small" />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title="Eliminar">
-                                            <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); onDelete(mantenimiento); }}>
-                                                <DeleteIcon fontSize="small" />
-                                            </IconButton>
-                                        </Tooltip>
+
+                                        {/* EDITAR - Solo si tiene permiso */}
+                                        {puedeEditar && onEdit && (
+                                            <Tooltip title="Editar">
+                                                <span>
+                                                    <IconButton 
+                                                        size="small" 
+                                                        color="primary" 
+                                                        onClick={(e) => { 
+                                                            e.stopPropagation(); 
+                                                            onEdit(mantenimiento); 
+                                                        }}
+                                                    >
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                </span>
+                                            </Tooltip>
+                                        )}
+
+                                        {/* ELIMINAR - Solo si tiene permiso */}
+                                        {puedeEliminar && onDelete && (
+                                            <Tooltip title="Eliminar">
+                                                <span>
+                                                    <IconButton 
+                                                        size="small" 
+                                                        color="error" 
+                                                        onClick={(e) => { 
+                                                            e.stopPropagation(); 
+                                                            onDelete(mantenimiento); 
+                                                        }}
+                                                    >
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </span>
+                                            </Tooltip>
+                                        )}
                                     </Box>
                                 </TableCell>
                             </TableRow>

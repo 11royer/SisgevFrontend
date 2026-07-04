@@ -227,11 +227,11 @@ const Perfil = () => {
                     </Typography>
                 </Alert>
 
-                {/* CONTENIDO PRINCIPAL: LADO A LADO */}
+                {/* CONTENIDO PRINCIPAL */}
                 <Grid container spacing={3} alignItems="stretch">
                     
                     {/* SECCIÓN 1: DATOS PERSONALES (Ocupa 7/12 en sm) */}
-                    <Grid item xs={12} sm={7} md={8}>
+                    <Grid size={{ xs: 12, sm: 7, md: 8 }}>
                         <Paper elevation={3} sx={{ p: 3, borderRadius: '0.5rem', height: '100%' }}>
                             <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3, color: 'primary.main' }}>
                                 Información Personal
@@ -263,13 +263,18 @@ const Perfil = () => {
                                 <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
                                     <Typography variant="h5" sx={{ fontWeight: 'bold' }}>{usuario?.nombre_completo}</Typography>
                                     <Typography variant="body1" color="text.secondary">{usuario?.rol?.nombre || 'Funcionario Policial'}</Typography>
+                                    {usuario?.cargo && (
+                                        <Typography variant="body2" color="primary" sx={{ mt: 0.5 }}>
+                                            {usuario.cargo}
+                                        </Typography>
+                                    )}
                                 </Box>
                             </Box>
 
                             <Divider sx={{ mb: 3 }} />
 
                             <Grid container spacing={2}>
-                                <Grid item xs={12} md={6}>
+                                <Grid size={{ xs: 12, md: 6 }}>
                                     <TextField 
                                         fullWidth 
                                         label="Nombre Completo" 
@@ -280,7 +285,19 @@ const Perfil = () => {
                                         size="small" 
                                     />
                                 </Grid>
-                                <Grid item xs={12} md={6}>
+                                
+                                {/* campo: Cargo (solo lectura) */}
+                                <Grid size={{ xs: 12, md: 6 }}>
+                                    <TextField 
+                                        fullWidth 
+                                        label="Cargo / Función"
+                                        value={usuario?.cargo || 'Sin cargo asignado'} 
+                                        disabled 
+                                        size="small" 
+                                    />
+                                </Grid>
+
+                                <Grid size={{ xs: 12, md: 6 }}>
                                     <TextField 
                                         fullWidth 
                                         label="Correo Electrónico" 
@@ -291,7 +308,7 @@ const Perfil = () => {
                                         size="small" 
                                     />
                                 </Grid>
-                                <Grid item xs={12} md={6}>
+                                <Grid size={{ xs: 12, md: 6 }}>
                                     <TextField 
                                         fullWidth 
                                         label="Teléfono / Celular" 
@@ -302,7 +319,7 @@ const Perfil = () => {
                                         size="small" 
                                     />
                                 </Grid>
-                                <Grid item xs={12} md={6}>
+                                <Grid size={{ xs: 12, md: 6 }}>
                                     <TextField 
                                         fullWidth 
                                         label="Usuario de Sistema"
@@ -315,8 +332,8 @@ const Perfil = () => {
                         </Paper>
                     </Grid>
 
-                    {/* SECCIÓN 2: SEGURIDAD (Ocupa 5/12 en sm) */}
-                    <Grid item xs={12} sm={5} md={4}>
+                    {/* SECCIÓN 2: SEGURIDAD (Ocupa 5/12 en sm) - Sin cambios */}
+                    <Grid size={{ xs: 12, sm: 5, md: 4 }}>
                         <Paper elevation={3} sx={{ 
                             p: 3, 
                             borderRadius: '0.5rem', 

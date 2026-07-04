@@ -8,6 +8,7 @@ import MantenimientoForm from '../../components/mantenimientos/MantenimientoForm
 import { mantenimientoService } from '../../services/MantenimientoService';
 import { salidaRepuestoService } from '../../services/SalidaRepuestoService';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission } from '../../utils/hasPermission';
 
 const CreateMantenimiento = () => {
     const navigate = useNavigate();
@@ -16,13 +17,14 @@ const CreateMantenimiento = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
+    const puedeCrear = hasPermission(currentUser, 'crear_mantenimientos');
 
-    // Verificar permisos
-    if (!['Administrador', 'Técnico'].includes(currentUser?.rol?.nombre)) {
+    if (!puedeCrear) {
         return (
             <Layout>
                 <Alert severity="error" sx={{ m: 2 }}>
                     No tienes permisos para registrar mantenimientos.
+                    Se requiere el permiso: <strong>crear_mantenimientos</strong>
                 </Alert>
             </Layout>
         );

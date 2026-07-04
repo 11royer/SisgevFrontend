@@ -1,4 +1,3 @@
-// src/components/usuarios/UsuarioTable.jsx
 import React from 'react';
 import {
   Box,
@@ -28,7 +27,8 @@ const UsuarioTable = ({ usuarios, onEdit, onDelete, onView }) => {
           <TableRow>
             <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Funcionario</TableCell>
             <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Usuario</TableCell>
-            <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Rol / Cargo</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Cargo / Función</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Rol</TableCell>
             <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Contacto</TableCell>
             <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default', textAlign: 'center' }}>Acciones</TableCell>
           </TableRow>
@@ -52,8 +52,17 @@ const UsuarioTable = ({ usuarios, onEdit, onDelete, onView }) => {
                 </Box>
               </TableCell>
 
+              {/* COLUMNA USUARIO */}
               <TableCell>{usuario.usuario}</TableCell>
 
+              {/* NUEVA COLUMNA: CARGO / FUNCIÓN */}
+              <TableCell>
+                <Typography variant="body2">
+                  {usuario.cargo || 'Sin cargo asignado'}
+                </Typography>
+              </TableCell>
+
+              {/* COLUMNA ROL */}
               <TableCell>
                 <Chip
                   label={usuario.rol?.nombre || 'Sin Rol'}
@@ -64,6 +73,7 @@ const UsuarioTable = ({ usuarios, onEdit, onDelete, onView }) => {
                 />
               </TableCell>
 
+              {/* COLUMNA CONTACTO */}
               <TableCell>
                 <Typography variant="caption" display="block">{usuario.email}</Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -71,28 +81,32 @@ const UsuarioTable = ({ usuarios, onEdit, onDelete, onView }) => {
                 </Typography>
               </TableCell>
 
-              {/* ACCIONES DE GESTIÓN - SOLO EDITAR Y ELIMINAR */}
+              {/* ACCIONES - CON TOOLTIPS CON WRAPPER SPAN */}
               <TableCell sx={{ textAlign: 'center' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'center', gap: '0.25rem' }}>
                   
                   <Tooltip title="Editar">
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => onEdit(usuario)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
+                    <span>
+                      <IconButton
+                        size="small"
+                        color="primary"
+                        onClick={() => onEdit(usuario)}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </span>
                   </Tooltip>
 
                   <Tooltip title="Eliminar">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => onDelete(usuario)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
+                    <span>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => onDelete(usuario)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </span>
                   </Tooltip>
                 </Box>
               </TableCell>
@@ -101,7 +115,7 @@ const UsuarioTable = ({ usuarios, onEdit, onDelete, onView }) => {
 
           {usuarios.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} sx={{ textAlign: 'center', py: 3 }}>
+              <TableCell colSpan={6} sx={{ textAlign: 'center', py: 3 }}>
                 <Typography color="text.secondary">
                   No se encontraron usuarios registrados.
                 </Typography>

@@ -31,6 +31,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../../layout/Layout';
 import { conductorService } from '../../services/ConductorService';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission } from '../../utils/hasPermission';
 
 const ViewConductor = () => {
     const { id } = useParams();
@@ -42,7 +43,7 @@ const ViewConductor = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const puedeEditar = ['Administrador', 'Operador'].includes(currentUser?.rol?.nombre);
+    const puedeEditar = hasPermission(currentUser, 'editar_conductores');
 
     useEffect(() => {
         cargarDatos();
@@ -130,11 +131,11 @@ const ViewConductor = () => {
                     )}
                 </Box>
 
-                {/* Tarjeta de información personal */}
+                {/* TARJETA DE INFORMACIÓN PERSONAL */}
                 <Paper elevation={3} sx={{ p: '1.5rem', mb: '1.5rem', borderRadius: '0.75rem' }}>
                     <Grid container spacing="2rem">
                         {/* Avatar y datos básicos */}
-                        <Grid item xs={12} md={3} sx={{ textAlign: 'center' }}>
+                        <Grid size={{ xs: 12, md: 3 }} sx={{ textAlign: 'center' }}>
                             <Avatar
                                 sx={{
                                     width: '8rem',
@@ -154,37 +155,37 @@ const ViewConductor = () => {
                         </Grid>
 
                         {/* Datos personales */}
-                        <Grid item xs={12} md={9}>
+                        <Grid size={{ xs: 12, md: 9 }}>
                             <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold', color: 'primary.main' }}>
                                 Datos Personales
                             </Typography>
                             <Grid container spacing="1.5rem">
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Cédula de Identidad</Typography>
                                     <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                         <BadgeIcon fontSize="small" color="action" />
                                         {conductor.ci}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Licencia de Conducir</Typography>
                                     <Typography variant="body1">{conductor.licencia}</Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Teléfono</Typography>
                                     <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                         <PhoneIcon fontSize="small" color="action" />
                                         {conductor.telefono || 'No registrado'}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Fecha de Ingreso</Typography>
                                     <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                         <CalendarTodayIcon fontSize="small" color="action" />
                                         {conductor.fecha_ingreso_formateada || conductor.fecha_ingreso}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12}>
+                                <Grid size={{ xs: 12 }}>
                                     <Typography variant="caption" color="text.secondary">Dirección</Typography>
                                     <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                         <HomeIcon fontSize="small" color="action" />
@@ -196,7 +197,7 @@ const ViewConductor = () => {
 
                         {/* Observaciones */}
                         {conductor.observaciones && (
-                            <Grid item xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Divider sx={{ my: '1rem' }} />
                                 <Typography variant="caption" color="text.secondary">Observaciones</Typography>
                                 <Paper variant="outlined" sx={{ p: '0.75rem', bgcolor: 'action.hover', mt: '0.25rem' }}>
@@ -207,7 +208,7 @@ const ViewConductor = () => {
                     </Grid>
                 </Paper>
 
-                {/* Historial de asignaciones */}
+                {/* HISTORIAL DE ASIGNACIONES */}
                 <Paper elevation={3} sx={{ borderRadius: '0.75rem', overflow: 'hidden' }}>
                     <Box sx={{ p: '1.5rem', borderBottom: '1px solid', borderColor: 'divider' }}>
                         <Typography variant="h6" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -215,7 +216,7 @@ const ViewConductor = () => {
                             Historial de Asignaciones
                         </Typography>
                     </Box>
-                    
+
                     {asignaciones.length === 0 ? (
                         <Box sx={{ p: '3rem', textAlign: 'center' }}>
                             <AssignmentIcon sx={{ fontSize: '3rem', color: 'text.secondary', mb: '1rem' }} />
@@ -236,8 +237,15 @@ const ViewConductor = () => {
                                     </ListItemIcon>
                                     <ListItemText
                                         primary={
-                                            <Box sx={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                                                <Typography variant="body1" fontWeight="medium">
+                                            <Box 
+                                                component="span" 
+                                                sx={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}
+                                            >
+                                                <Typography 
+                                                    component="span" 
+                                                    variant="body1" 
+                                                    fontWeight="medium"
+                                                >
                                                     {asignacion.vehiculo?.placa} - {asignacion.vehiculo?.marca} {asignacion.vehiculo?.modelo}
                                                 </Typography>
                                                 <Chip
@@ -248,21 +256,43 @@ const ViewConductor = () => {
                                             </Box>
                                         }
                                         secondary={
-                                            <Box sx={{ mt: 0.5 }}>
-                                                <Typography variant="caption" display="block">
+                                            <Box component="span" sx={{ mt: 0.5, display: 'block' }}>
+                                                <Typography 
+                                                    component="span" 
+                                                    variant="caption" 
+                                                    display="block"
+                                                >
                                                     Asignación: {new Date(asignacion.fecha_asignacion).toLocaleString()}
                                                     {asignacion.fecha_retorno && ` - Retorno: ${new Date(asignacion.fecha_retorno).toLocaleDateString()}`}
                                                 </Typography>
-                                                <Typography variant="body2" color="primary">
+                                                <Typography 
+                                                    component="span" 
+                                                    variant="body2" 
+                                                    color="primary"
+                                                    display="block"
+                                                >
                                                     Destino: {asignacion.destino}
                                                 </Typography>
                                                 {asignacion.observaciones && (
-                                                    <Typography variant="caption" color="text.secondary">
+                                                    <Typography 
+                                                        component="span" 
+                                                        variant="caption" 
+                                                        color="text.secondary"
+                                                        display="block"
+                                                    >
                                                         {asignacion.observaciones}
                                                     </Typography>
                                                 )}
                                             </Box>
                                         }
+                                        primaryTypographyProps={{
+                                            component: 'div',
+                                            variant: 'body2',
+                                        }}
+                                        secondaryTypographyProps={{
+                                            component: 'div',
+                                            variant: 'body2',
+                                        }}
                                     />
                                 </ListItem>
                             ))}

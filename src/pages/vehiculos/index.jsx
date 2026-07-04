@@ -29,13 +29,13 @@ import ClearIcon from '@mui/icons-material/Clear';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useNavigate } from 'react-router-dom';
-
 import Layout from '../../layout/Layout';
 import VehiculoTable from '../../components/vehiculos/VehiculoTable';
 import { useVehiculos } from '../../hooks/useVehiculos';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission, hasAnyPermission } from '../../utils/hasPermission';
 
-// ===== LISTA COMPLETA DE DISTRITOS (SINCRONIZADA CON EL BACKEND) =====
+// LISTA COMPLETA DE DISTRITOS (SINCRONIZADA CON EL BACKEND)
 const DISTRITOS_COMPLETOS = [
     'Potosí',
     'Uyuni',
@@ -73,26 +73,23 @@ const VehiculosPage = () => {
     });
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
     
-    // Estado para diálogo de eliminación
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [vehiculoToDelete, setVehiculoToDelete] = useState(null);
     const [deleting, setDeleting] = useState(false);
 
-    const puedeEscribir = ['Administrador', 'Operador'].includes(currentUser?.rol?.nombre);
+    const puedeCrear = hasPermission(currentUser, 'crear_vehiculos');
+    const puedeEditar = hasPermission(currentUser, 'editar_vehiculos');
+    const puedeEliminar = hasPermission(currentUser, 'eliminar_vehiculos');
+    const puedeCambiarEstado = hasPermission(currentUser, 'cambiar_estado_vehiculos');
 
-    // ===== COMBINAR DISTRITOS: los que vienen del backend + los completos =====
     const distritosParaFiltro = React.useMemo(() => {
-        // Si hay distritos disponibles del backend, usarlos (pueden tener más)
-        // Si no, usar la lista completa
         if (distritosDisponibles && distritosDisponibles.length > 0) {
-            // Combinar y eliminar duplicados
             const combinados = [...new Set([...DISTRITOS_COMPLETOS, ...distritosDisponibles])];
             return combinados.sort();
         }
         return DISTRITOS_COMPLETOS;
     }, [distritosDisponibles]);
 
-    // Sincronizar filtros locales
     useEffect(() => {
         setFiltrosLocales({
             search: filtros.search || '',
@@ -101,7 +98,6 @@ const VehiculosPage = () => {
         });
     }, [filtros]);
 
-    // Cerrar alertas automáticamente
     useEffect(() => {
         if (error || successMessage) {
             const timer = setTimeout(() => limpiarMensajes(), 5000);
@@ -142,7 +138,6 @@ const VehiculosPage = () => {
         navigate(`/vehiculos/${vehiculo.id}`);
     };
 
-    // ===== MANEJADOR DE ELIMINACIÓN CON DIÁLOGO =====
     const handleEliminarClick = (vehiculo) => {
         setVehiculoToDelete(vehiculo);
         setDeleteDialogOpen(true);
@@ -150,7 +145,6 @@ const VehiculosPage = () => {
 
     const handleConfirmarEliminar = async () => {
         if (!vehiculoToDelete) return;
-        
         try {
             setDeleting(true);
             await eliminarVehiculo(vehiculoToDelete.id);
@@ -185,11 +179,13 @@ const VehiculosPage = () => {
                     </Typography>
                     <Box sx={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                         <Tooltip title="Refrescar">
-                            <IconButton onClick={handleRefresh} disabled={loading}>
-                                <RefreshIcon />
-                            </IconButton>
+                            <span>
+                                <IconButton onClick={handleRefresh} disabled={loading}>
+                                    <RefreshIcon />
+                                </IconButton>
+                            </span>
                         </Tooltip>
-                        {puedeEscribir && (
+                        {puedeCrear && (
                             <Button
                                 variant="contained"
                                 startIcon={<AddIcon />}
@@ -202,10 +198,10 @@ const VehiculosPage = () => {
                     </Box>
                 </Box>
 
-                {/* Estadísticas rápidas */}
+                {/* ESTADÍSTICAS RÁPIDAS  */}
                 {estadisticas && (
                     <Grid container spacing={2} sx={{ mb: '1.5rem' }}>
-                        <Grid item xs={6} sm={3}>
+                        <Grid size={{ xs: 6, sm: 3 }}>
                             <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
                                 <Typography variant="h5" color="primary.main" fontWeight="bold">
                                     {estadisticas.total || 0}
@@ -213,7 +209,7 @@ const VehiculosPage = () => {
                                 <Typography variant="caption" color="text.secondary">Total</Typography>
                             </Paper>
                         </Grid>
-                        <Grid item xs={6} sm={3}>
+                        <Grid size={{ xs: 6, sm: 3 }}>
                             <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
                                 <Typography variant="h5" color="success.main" fontWeight="bold">
                                     {estadisticas.operativos || 0}
@@ -221,7 +217,7 @@ const VehiculosPage = () => {
                                 <Typography variant="caption" color="text.secondary">Operativos</Typography>
                             </Paper>
                         </Grid>
-                        <Grid item xs={6} sm={3}>
+                        <Grid size={{ xs: 6, sm: 3 }}>
                             <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
                                 <Typography variant="h5" color="warning.main" fontWeight="bold">
                                     {estadisticas.en_taller || 0}
@@ -229,7 +225,7 @@ const VehiculosPage = () => {
                                 <Typography variant="caption" color="text.secondary">En Taller</Typography>
                             </Paper>
                         </Grid>
-                        <Grid item xs={6} sm={3}>
+                        <Grid size={{ xs: 6, sm: 3 }}>
                             <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
                                 <Typography variant="h5" color="error.main" fontWeight="bold">
                                     {estadisticas.baja || 0}
@@ -267,7 +263,7 @@ const VehiculosPage = () => {
                 {/* Barra de búsqueda y filtros */}
                 <Paper elevation={2} sx={{ p: '1rem', mb: '1.5rem', borderRadius: '0.5rem' }}>
                     <Grid container spacing="1rem" alignItems="center">
-                        <Grid item xs={12} md={5}>
+                        <Grid size={{ xs: 12, md: 5 }}>
                             <TextField
                                 fullWidth
                                 placeholder="Buscar por placa, marca, modelo o distrito..."
@@ -284,7 +280,7 @@ const VehiculosPage = () => {
                                 onKeyPress={(e) => e.key === 'Enter' && handleAplicarFiltros()}
                             />
                         </Grid>
-                        <Grid item xs={12} md={7}>
+                        <Grid size={{ xs: 12, md: 7 }}>
                             <Box sx={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                                 <Button
                                     variant="outlined"
@@ -318,10 +314,10 @@ const VehiculosPage = () => {
 
                     {/* Filtros avanzados (colapsable) */}
                     {mostrarFiltros && (
-                        <Box sx={{ mt: '1.5rem', pt: '1rem', borderTop: '1px solid', borderColor: 'divider' }}>
+                        <Box sx={{ mt: '1.5rem', pt: '1rem', borderTop: '1px solid', borderColo }}>
+                            {/* FILTROS AVANZADOS */}
                             <Grid container spacing="1rem">
-                                {/* FILTRO POR ESTADO OPERATIVO */}
-                                <Grid item xs={12} md={4}>
+                                <Grid size={{ xs: 12, md: 4 }}>
                                     <FormControl fullWidth size="small">
                                         <InputLabel>Estado Operativo</InputLabel>
                                         <Select
@@ -338,8 +334,7 @@ const VehiculosPage = () => {
                                     </FormControl>
                                 </Grid>
 
-                                {/* ===== FILTRO POR DISTRITO - CON TODOS LOS DISTRITOS ===== */}
-                                <Grid item xs={12} md={4}>
+                                <Grid size={{ xs: 12, md: 4 }}>
                                     <FormControl fullWidth size="small">
                                         <InputLabel>Distrito</InputLabel>
                                         <Select
@@ -357,7 +352,7 @@ const VehiculosPage = () => {
                                     </FormControl>
                                 </Grid>
 
-                                <Grid item xs={12} md={4}>
+                                <Grid size={{ xs: 12, md: 4 }}>
                                     <Chip
                                         label={`${vehiculos.length} vehículos encontrados`}
                                         color="primary"
@@ -374,15 +369,15 @@ const VehiculosPage = () => {
                 <VehiculoTable
                     vehiculos={vehiculos}
                     loading={loading}
-                    onEdit={puedeEscribir ? handleEditarVehiculo : null}
-                    onDelete={puedeEscribir ? handleEliminarClick : null}
+                    onEdit={puedeEditar ? handleEditarVehiculo : null}
+                    onDelete={puedeEliminar ? handleEliminarClick : null}
                     onView={handleVerDetalle}
-                    onEstadoChange={puedeEscribir ? cambiarEstado : null}
+                    onEstadoChange={puedeCambiarEstado ? cambiarEstado : null}
                     pagination={pagination}
                     onPageChange={cambiarPagina}
                 />
 
-                {/* ===== DIÁLOGO DE CONFIRMACIÓN PARA ELIMINAR ===== */}
+                {/* DIÁLOGO DE CONFIRMACIÓN PARA ELIMINAR */}
                 <Dialog
                     open={deleteDialogOpen}
                     onClose={handleCancelarEliminar}

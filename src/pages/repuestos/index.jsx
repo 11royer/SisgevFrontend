@@ -30,6 +30,7 @@ import RepuestoTable from '../../components/repuestos/RepuestoTable';
 import StockUpdateDialog from '../../components/repuestos/StockUpdateDialog';
 import { useRepuestos } from '../../hooks/useRepuestos';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission, hasAnyPermission } from '../../utils/hasPermission';
 
 const RepuestosPage = () => {
     const navigate = useNavigate();
@@ -61,18 +62,26 @@ const RepuestosPage = () => {
     const [selectedRepuesto, setSelectedRepuesto] = useState(null);
     const [stockTipo, setStockTipo] = useState(null);
     const [updatingStock, setUpdatingStock] = useState(false);
+    const puedeCrear = hasPermission(currentUser, 'crear_repuestos');
+    const puedeEditar = hasPermission(currentUser, 'editar_repuestos');
+    const puedeEliminar = hasPermission(currentUser, 'eliminar_repuestos');
+    const puedeActualizarStock = hasPermission(currentUser, 'actualizar_stock');
     
-    const puedeEscribir = ['Administrador', 'Técnico'].includes(currentUser?.rol?.nombre);
+    // Para acciones que requieren cualquiera de estos permisos
+    const puedeEscribir = hasAnyPermission(currentUser, [
+        'crear_repuestos',
+        'editar_repuestos',
+        'eliminar_repuestos',
+        'actualizar_stock'
+    ]);
 
     // CALCULAR STOCK BAJO LOCALMENTE (para asegurar que se muestre)
     const stockBajoLocal = repuestos.filter(r => {
-        // Verificar que el repuesto es activo y tiene stock bajo
         const cantidadActual = r.cantidad_actual || 0;
         const cantidadMinima = r.cantidad_minima || 0;
         return r.activo !== false && cantidadActual <= cantidadMinima;
     }).length;
 
-    // Usar el valor del hook o el calculado localmente (el que sea mayor o más preciso)
     const stockBajoFinal = stockBajoCount > 0 ? stockBajoCount : stockBajoLocal;
 
     useEffect(() => {
@@ -171,11 +180,13 @@ const RepuestosPage = () => {
                     </Typography>
                     <Box sx={{ display: 'flex', gap: '1rem' }}>
                         <Tooltip title="Refrescar">
-                            <IconButton onClick={handleRefresh} disabled={loading}>
-                                <RefreshIcon />
-                            </IconButton>
+                            <span>
+                                <IconButton onClick={handleRefresh} disabled={loading}>
+                                    <RefreshIcon />
+                                </IconButton>
+                            </span>
                         </Tooltip>
-                        {puedeEscribir && (
+                        {puedeCrear && (
                             <Button
                                 variant="contained"
                                 startIcon={<AddIcon />}
@@ -188,9 +199,9 @@ const RepuestosPage = () => {
                     </Box>
                 </Box>
 
-                {/* Tarjetas de estadísticas - USAR stockBajoFinal */}
+                {/* ESTADÍSTICAS */}
                 <Grid container spacing={2} sx={{ mb: '1.5rem' }}>
-                    <Grid item xs={6} sm={3}>
+                    <Grid size={{ xs: 6, sm: 3 }}>
                         <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
                             <Typography variant="h5" color="primary.main" fontWeight="bold">
                                 {estadisticas?.total_repuestos || pagination?.total || repuestos.length || 0}
@@ -198,7 +209,7 @@ const RepuestosPage = () => {
                             <Typography variant="caption" color="text.secondary">Total Repuestos</Typography>
                         </Paper>
                     </Grid>
-                    <Grid item xs={6} sm={3}>
+                    <Grid size={{ xs: 6, sm: 3 }}>
                         <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
                             <Typography variant="h5" color="success.main" fontWeight="bold">
                                 {estadisticas?.activos || repuestos.filter(r => r.activo).length || 0}
@@ -206,7 +217,7 @@ const RepuestosPage = () => {
                             <Typography variant="caption" color="text.secondary">Activos</Typography>
                         </Paper>
                     </Grid>
-                    <Grid item xs={6} sm={3}>
+                    <Grid size={{ xs: 6, sm: 3 }}>
                         <Paper 
                             sx={{ 
                                 p: '1rem', 
@@ -227,7 +238,7 @@ const RepuestosPage = () => {
                             </Typography>
                         </Paper>
                     </Grid>
-                    <Grid item xs={6} sm={3}>
+                    <Grid size={{ xs: 6, sm: 3 }}>
                         <Paper sx={{ p: '1rem', textAlign: 'center', borderRadius: '0.75rem' }}>
                             <Typography variant="h5" color="info.main" fontWeight="bold">
                                 Bs. {estadisticas?.valor_inventario?.toLocaleString() || 0}
@@ -237,7 +248,7 @@ const RepuestosPage = () => {
                     </Grid>
                 </Grid>
 
-                {/* Alertas de stock bajo - USAR stockBajoFinal */}
+                {/* Alertas de stock bajo */}
                 {stockBajoFinal > 0 && (
                     <Alert 
                         severity="warning" 
@@ -279,15 +290,15 @@ const RepuestosPage = () => {
                 {/* Nota informativa */}
                 <Alert severity="info" sx={{ mb: '1.5rem', borderRadius: '0.5rem' }}>
                     <Typography variant="body2">
-                        📦 Gestión de inventario de repuestos para mantenimientos. 
+                        Gestión de inventario de repuestos para mantenimientos. 
                         El stock bajo se activa cuando la cantidad actual es menor o igual a la cantidad mínima.
                     </Typography>
                 </Alert>
 
-                {/* Barra de búsqueda */}
+                {/* BARRA DE BÚSQUEDA */}
                 <Paper elevation={2} sx={{ p: '1rem', mb: '1.5rem', borderRadius: '0.5rem' }}>
                     <Grid container spacing="1rem" alignItems="center">
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <TextField
                                 fullWidth
                                 placeholder="Buscar por código o nombre..."
@@ -304,7 +315,7 @@ const RepuestosPage = () => {
                                 onKeyPress={(e) => e.key === 'Enter' && handleAplicarFiltros()}
                             />
                         </Grid>
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Box sx={{ display: 'flex', gap: '1rem' }}>
                                 <Button
                                     variant="outlined"
@@ -337,7 +348,7 @@ const RepuestosPage = () => {
                     {mostrarFiltros && (
                         <Box sx={{ mt: '1.5rem', pt: '1rem', borderTop: '1px solid', borderColor: 'divider' }}>
                             <Grid container spacing="1rem">
-                                <Grid item xs={12} md={4}>
+                                <Grid size={{ xs: 12, md: 4 }}>
                                     <FormControl fullWidth size="small">
                                         <InputLabel>Estado</InputLabel>
                                         <Select
@@ -351,7 +362,7 @@ const RepuestosPage = () => {
                                         </Select>
                                     </FormControl>
                                 </Grid>
-                                <Grid item xs={12} md={4}>
+                                <Grid size={{ xs: 12, md: 4 }}>
                                     <FormControl fullWidth size="small">
                                         <InputLabel>Stock</InputLabel>
                                         <Select
@@ -373,12 +384,15 @@ const RepuestosPage = () => {
                 <RepuestoTable
                     repuestos={repuestos}
                     loading={loading}
-                    onEdit={puedeEscribir ? handleEditarRepuesto : null}
-                    onDelete={puedeEscribir ? handleEliminar : null}
+                    onEdit={puedeEditar ? handleEditarRepuesto : null}
+                    onDelete={puedeEliminar ? handleEliminar : null}
                     onView={handleVerDetalle}
-                    onActualizarStock={puedeEscribir ? handleActualizarStock : null}
+                    onActualizarStock={puedeActualizarStock ? handleActualizarStock : null}
                     pagination={pagination}
                     onPageChange={cambiarPagina}
+                    puedeEditar={puedeEditar}
+                    puedeEliminar={puedeEliminar}
+                    puedeActualizarStock={puedeActualizarStock}
                 />
 
                 {/* Diálogo de actualización de stock */}

@@ -7,6 +7,7 @@ import Layout from '../../layout/Layout';
 import ConductorForm from '../../components/conductores/ConductorForm';
 import { conductorService } from '../../services/ConductorService';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission } from '../../utils/hasPermission';
 
 const EditConductor = () => {
     // IMPORTANTE: useParams devuelve un objeto con las propiedades de la URL
@@ -21,11 +22,15 @@ const EditConductor = () => {
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
 
-    // Verificar permisos
-    if (!['Administrador', 'Operador'].includes(currentUser?.rol?.nombre)) {
+    const puedeEditar = hasPermission(currentUser, 'editar_conductores');
+
+    if (!puedeEditar) {
         return (
             <Layout>
-                <Alert severity="error" sx={{ m: 2 }}>No tienes permisos para editar conductores.</Alert>
+                <Alert severity="error" sx={{ m: 2 }}>
+                    No tienes permisos para editar conductores.
+                    Se requiere el permiso: <strong>editar_conductores</strong>
+                </Alert>
             </Layout>
         );
     }
@@ -42,16 +47,14 @@ const EditConductor = () => {
             setLoading(true);
             setError(null);
             
-            // IMPORTANTE: id ya es un string, no necesitas convertirlo
-            // pero asegúrate de que no sea undefined
-            console.log('Cargando conductor con ID:', id); // Depuración
+            console.log('Cargando conductor con ID:', id);
             
             const response = await conductorService.getById(id);
             
             // La respuesta puede estar en response.data o response.data.data
             const conductorData = response.data.data || response.data;
             
-            console.log('Conductor cargado:', conductorData); // Depuración
+            console.log('Conductor cargado:', conductorData);
             
             setConductor(conductorData);
         } catch (error) {

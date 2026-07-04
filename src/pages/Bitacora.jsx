@@ -108,14 +108,24 @@ const Bitacora = () => {
                     <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                         Bitácora de Auditoría
                     </Typography>
+                    
+                    {/* Con wrapper span para botón deshabilitado */}
                     <Tooltip title="Refrescar">
-                        <IconButton onClick={handleRefresh} disabled={loading}>
-                            <RefreshIcon />
-                        </IconButton>
+                        <span>
+                            <IconButton onClick={handleRefresh} disabled={loading}>
+                                <RefreshIcon />
+                            </IconButton>
+                        </span>
                     </Tooltip>
                 </Box>
 
                 {/* NOTA INFORMATIVA */}
+                {error && (
+                    <Alert severity="error" sx={{ mb: '1.5rem', borderRadius: '0.5rem' }} onClose={() => setError(null)}>
+                        {error}
+                    </Alert>
+                )}
+
                 <Alert severity="info" sx={{ mb: '1.5rem', borderRadius: '0.5rem' }}>
                     <Typography variant="body2">
                         <strong>Nota:</strong> Registro histórico de todas las acciones realizadas en el sistema.

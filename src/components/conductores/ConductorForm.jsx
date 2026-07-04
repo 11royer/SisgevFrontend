@@ -16,15 +16,38 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
-/**
- * Formulario para crear/editar conductores
- * @param {Object} props
- * @param {Object} props.conductor - Datos del conductor (para edición)
- * @param {Function} props.onSubmit - Función al enviar
- * @param {Function} props.onCancel - Función al cancelar
- * @param {boolean} props.loading - Estado de carga
- */
+/** Formulario para crear/editar conductores */
 const ConductorForm = ({ conductor, onSubmit, onCancel, loading }) => {
+    // FUNCIÓN PARA NORMALIZAR FECHA A FORMATO YYYY-MM-DD
+    const normalizarFecha = (fecha) => {
+        if (!fecha) return new Date().toISOString().split('T')[0];
+        
+        // Si ya está en formato YYYY-MM-DD, devolverlo
+        if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+            return fecha;
+        }
+        
+        // Si está en formato DD/MM/YYYY, convertir a YYYY-MM-DD
+        if (fecha.includes('/')) {
+            const partes = fecha.split('/');
+            if (partes.length === 3) {
+                return `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+            }
+        }
+        
+        // Si está en otro formato, intentar crear una fecha válida
+        try {
+            const date = new Date(fecha);
+            if (!isNaN(date.getTime())) {
+                return date.toISOString().split('T')[0];
+            }
+        } catch (e) {
+            // Si falla, usar fecha actual
+        }
+        
+        return new Date().toISOString().split('T')[0];
+    };
+
     // Estado del formulario
     const [formData, setFormData] = useState({
         nombre_completo: conductor?.nombre_completo || '',
@@ -33,7 +56,8 @@ const ConductorForm = ({ conductor, onSubmit, onCancel, loading }) => {
         telefono: conductor?.telefono || '',
         direccion: conductor?.direccion || '',
         estado: conductor?.estado ?? true,
-        fecha_ingreso: conductor?.fecha_ingreso || new Date().toISOString().split('T')[0],
+        // NORMALIZAR FECHA DE INGRESO
+        fecha_ingreso: normalizarFecha(conductor?.fecha_ingreso),
         observaciones: conductor?.observaciones || '',
     });
 
@@ -112,7 +136,7 @@ const ConductorForm = ({ conductor, onSubmit, onCancel, loading }) => {
             <form onSubmit={handleSubmit}>
                 <Grid container spacing={3}>
                     {/* Nombre Completo */}
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <TextField
                             fullWidth
                             label="Nombre Completo *"
@@ -126,7 +150,7 @@ const ConductorForm = ({ conductor, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* CI */}
-                    <Grid item xs={12} md={3}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                         <TextField
                             fullWidth
                             label="Cédula de Identidad *"
@@ -141,7 +165,7 @@ const ConductorForm = ({ conductor, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Licencia */}
-                    <Grid item xs={12} md={3}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                         <TextField
                             fullWidth
                             label="Número de Licencia *"
@@ -155,7 +179,7 @@ const ConductorForm = ({ conductor, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Teléfono */}
-                    <Grid item xs={12} md={4}>
+                    <Grid size={{ xs: 12, md: 4 }}>
                         <TextField
                             fullWidth
                             label="Teléfono / Celular"
@@ -168,8 +192,8 @@ const ConductorForm = ({ conductor, onSubmit, onCancel, loading }) => {
                         />
                     </Grid>
 
-                    {/* Fecha Ingreso */}
-                    <Grid item xs={12} md={4}>
+                    {/* FECHA INGRESO */}
+                    <Grid size={{ xs: 12, md: 4 }}>
                         <TextField
                             fullWidth
                             label="Fecha de Ingreso *"
@@ -180,11 +204,15 @@ const ConductorForm = ({ conductor, onSubmit, onCancel, loading }) => {
                             required
                             size="small"
                             InputLabelProps={{ shrink: true }}
+                            // Asegurar que el valor siempre sea YYYY-MM-DD
+                            inputProps={{
+                                pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}'
+                            }}
                         />
                     </Grid>
 
                     {/* Estado (Activo/Inactivo) */}
-                    <Grid item xs={12} md={4}>
+                    <Grid size={{ xs: 12, md: 4 }}>
                         <FormControlLabel
                             control={
                                 <Switch
@@ -200,7 +228,7 @@ const ConductorForm = ({ conductor, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Dirección */}
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <TextField
                             fullWidth
                             label="Dirección Domiciliaria"
@@ -213,7 +241,7 @@ const ConductorForm = ({ conductor, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Observaciones */}
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <TextField
                             fullWidth
                             label="Observaciones"

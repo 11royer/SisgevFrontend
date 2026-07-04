@@ -13,6 +13,7 @@ import Layout from '../../layout/Layout';
 import VehiculoForm from '../../components/vehiculos/VehiculoForm';
 import { vehiculoService } from '../../services/VehiculoService';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission } from '../../utils/hasPermission';
 
 const CreateVehiculo = () => {
   const navigate = useNavigate();
@@ -20,14 +21,14 @@ const CreateVehiculo = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  const puedeCrear = hasPermission(currentUser, 'crear_vehiculos');
 
-  // Verificar permisos
-  const rolesPermitidos = ['Administrador', 'Operador'];
-  if (!rolesPermitidos.includes(currentUser?.rol?.nombre)) {
+  if (!puedeCrear) {
     return (
       <Layout>
         <Alert severity="error" sx={{ m: 2 }}>
-          No tienes permisos para registrar vehículos.
+          No tienes permisos para registrar vehículos. 
+          Se requiere el permiso: <strong>crear_vehiculos</strong>
         </Alert>
       </Layout>
     );

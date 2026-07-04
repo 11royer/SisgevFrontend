@@ -7,7 +7,6 @@ export default function PrivateRoute({ children }) {
   const location = useLocation();
 
   // 1. Mientras verifica si hay sesión, mostramos un estado de carga.
-  // En una tesis, es mejor mostrar un Spinner que una pantalla en blanco (null).
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -17,7 +16,6 @@ export default function PrivateRoute({ children }) {
   }
 
   // 2. Si no hay token, lo mandamos al login.
-  // 'state={{ from: location }}' permite que, tras loguearse, el sistema lo devuelva a donde quería ir.
   if (!token) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

@@ -149,7 +149,7 @@ const AsignacionForm = ({ asignacion, onSubmit, onCancel, loading }) => {
             <form onSubmit={handleSubmit}>
                 <Grid container spacing={3}>
                     {/* Vehículo */}
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <FormControl fullWidth size="small" required>
                             <InputLabel>Vehículo *</InputLabel>
                             <Select
@@ -177,7 +177,7 @@ const AsignacionForm = ({ asignacion, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Conductor */}
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <FormControl fullWidth size="small" required>
                             <InputLabel>Conductor *</InputLabel>
                             <Select
@@ -205,7 +205,7 @@ const AsignacionForm = ({ asignacion, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Fecha Asignación */}
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <TextField
                             fullWidth
                             label="Fecha de Asignación *"
@@ -221,7 +221,7 @@ const AsignacionForm = ({ asignacion, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Fecha Retorno (solo lectura en edición) */}
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <TextField
                             fullWidth
                             label="Fecha de Retorno"
@@ -237,7 +237,7 @@ const AsignacionForm = ({ asignacion, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Destino */}
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <TextField
                             fullWidth
                             label="Destino / Misión *"
@@ -251,7 +251,7 @@ const AsignacionForm = ({ asignacion, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Observaciones */}
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <TextField
                             fullWidth
                             label="Observaciones"

@@ -26,17 +26,17 @@ import { vehiculoService } from '../../services/VehiculoService';
 import { repuestoService } from '../../services/RepuestoService';
 
 const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
-    // Estados del formulario
+    // INICIALIZAR EL ESTADO CON LOS VALORES CORRECTOS 
     const [formData, setFormData] = useState({
-        vehiculo_id: mantenimiento?.vehiculo_id || '',
-        tipo: mantenimiento?.tipo || '',
-        descripcion: mantenimiento?.descripcion || '',
-        fecha: mantenimiento?.fecha || new Date().toISOString().split('T')[0],
-        km_mantenimiento: mantenimiento?.km_mantenimiento || '',
-        costo: mantenimiento?.costo || '',
-        estado_mantenimiento: mantenimiento?.estado_mantenimiento || 'pendiente',
-        tecnico_responsable: mantenimiento?.tecnico_responsable || '',
-        observaciones: mantenimiento?.observaciones || '',
+        vehiculo_id: '',
+        tipo: '',
+        descripcion: '',
+        fecha: new Date().toISOString().split('T')[0],
+        km_mantenimiento: '',
+        costo: '',
+        estado_mantenimiento: 'pendiente',
+        tecnico_responsable: '',
+        observaciones: '',
     });
 
     // Estados para repuestos
@@ -50,6 +50,7 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
     const [loadingRepuestos, setLoadingRepuestos] = useState(false);
     const [error, setError] = useState(null);
     const [stockError, setStockError] = useState(null);
+    const [vehiculosCargados, setVehiculosCargados] = useState(false);
 
     // Tipos de mantenimiento
     const tiposMantenimiento = [
@@ -64,16 +65,59 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
         { value: 'finalizado', label: 'Finalizado' },
     ];
 
+    // ACTUALIZAR FORM DATA CUANDO CAMBIA EL MANTENIMIENTO
+    useEffect(() => {
+        if (mantenimiento) {
+            console.log('Mantenimiento recibido en form:', mantenimiento);
+            
+            // Asegurar que vehiculo_id sea un valor válido
+            let vehiculoId = mantenimiento.vehiculo_id;
+            if (!vehiculoId && mantenimiento.vehiculo) {
+                vehiculoId = mantenimiento.vehiculo.id;
+            }
+            
+            setFormData({
+                vehiculo_id: vehiculoId || '',
+                tipo: mantenimiento.tipo || '',
+                descripcion: mantenimiento.descripcion || '',
+                fecha: mantenimiento.fecha ? mantenimiento.fecha.split('T')[0] : new Date().toISOString().split('T')[0],
+                km_mantenimiento: mantenimiento.km_mantenimiento || '',
+                costo: mantenimiento.costo || '',
+                estado_mantenimiento: mantenimiento.estado_mantenimiento || 'pendiente',
+                tecnico_responsable: mantenimiento.tecnico_responsable || '',
+                observaciones: mantenimiento.observaciones || '',
+            });
+            
+            // Cargar repuestos existentes
+            if (mantenimiento.salidas_repuestos && mantenimiento.salidas_repuestos.length > 0) {
+                const repuestosCargados = mantenimiento.salidas_repuestos.map(sr => ({
+                    id: sr.repuesto?.id || sr.repuesto_id,
+                    repuesto_id: sr.repuesto?.id || sr.repuesto_id,
+                    codigo_interno: sr.repuesto?.codigo_interno || '',
+                    nombre_repuesto: sr.repuesto?.nombre_repuesto || '',
+                    cantidad: sr.cantidad_usada || 1,
+                    stock_actual: sr.repuesto?.cantidad_actual || 0
+                }));
+                setRepuestosSeleccionados(repuestosCargados);
+            }
+        }
+    }, [mantenimiento]);
+
     // Cargar vehículos
     useEffect(() => {
         const cargarVehiculos = async () => {
             try {
                 setLoadingVehiculos(true);
+                setVehiculosCargados(false);
                 const response = await vehiculoService.getAll({ per_page: 100 });
                 const data = response.data.data || response.data;
-                setVehiculos(Array.isArray(data) ? data : []);
+                const vehiculosData = Array.isArray(data) ? data : [];
+                setVehiculos(vehiculosData);
+                console.log('Vehículos cargados:', vehiculosData);
+                setVehiculosCargados(true);
             } catch (error) {
                 console.error('Error cargando vehículos:', error);
+                setVehiculosCargados(true); // Marcar como cargados aunque haya error
             } finally {
                 setLoadingVehiculos(false);
             }
@@ -98,20 +142,6 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
         cargarRepuestos();
     }, []);
 
-    // Cargar repuestos existentes del mantenimiento (para edición)
-    useEffect(() => {
-        if (mantenimiento?.salidas_repuestos && mantenimiento.salidas_repuestos.length > 0) {
-            const repuestosCargados = mantenimiento.salidas_repuestos.map(sr => ({
-                id: sr.repuesto?.id || sr.repuesto_id,
-                codigo_interno: sr.repuesto?.codigo_interno,
-                nombre_repuesto: sr.repuesto?.nombre_repuesto,
-                cantidad: sr.cantidad_usada,
-                stock_actual: sr.repuesto?.cantidad_actual || 0
-            }));
-            setRepuestosSeleccionados(repuestosCargados);
-        }
-    }, [mantenimiento]);
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -132,7 +162,6 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
             return;
         }
 
-        // Verificar si ya está agregado
         const yaExiste = repuestosSeleccionados.find(r => r.id === repuestoSeleccionado.id);
         if (yaExiste) {
             setStockError('Este repuesto ya está agregado');
@@ -156,7 +185,6 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
         setStockError(null);
     };
 
-    // Eliminar repuesto de la lista
     const handleEliminarRepuesto = (index) => {
         setRepuestosSeleccionados(prev => prev.filter((_, i) => i !== index));
     };
@@ -196,7 +224,6 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
 
         if (!validateForm()) return;
 
-        // Preparar datos con repuestos
         const dataToSubmit = {
             ...formData,
             km_mantenimiento: parseInt(formData.km_mantenimiento),
@@ -210,6 +237,18 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
 
         onSubmit(dataToSubmit);
     };
+
+    // RENDERIZADO CONDICIONAL: Mostrar loading mientras se cargan los vehículos
+    if (loadingVehiculos && !vehiculosCargados) {
+        return (
+            <Paper elevation={3} sx={{ p: { xs: '1.5rem', md: '2rem' }, borderRadius: '0.75rem', width: '100%' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px', flexDirection: 'column' }}>
+                    <CircularProgress />
+                    <Typography sx={{ mt: 2 }}>Cargando vehículos disponibles...</Typography>
+                </Box>
+            </Paper>
+        );
+    }
 
     return (
         <Paper elevation={3} sx={{ p: { xs: '1.5rem', md: '2rem' }, borderRadius: '0.75rem', width: '100%' }}>
@@ -246,12 +285,12 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
             <form onSubmit={handleSubmit}>
                 <Grid container spacing={3}>
                     {/* Vehículo */}
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <FormControl fullWidth size="small" required>
                             <InputLabel>Vehículo *</InputLabel>
                             <Select
                                 name="vehiculo_id"
-                                value={formData.vehiculo_id}
+                                value={formData.vehiculo_id || ''}
                                 onChange={handleChange}
                                 label="Vehículo *"
                                 disabled={loadingVehiculos}
@@ -263,11 +302,16 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
                                     </MenuItem>
                                 ))}
                             </Select>
+                            {vehiculos.length === 0 && vehiculosCargados && (
+                                <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                                    No hay vehículos disponibles. Contacte al administrador.
+                                </Typography>
+                            )}
                         </FormControl>
                     </Grid>
 
                     {/* Tipo */}
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <FormControl fullWidth size="small" required>
                             <InputLabel>Tipo de Mantenimiento *</InputLabel>
                             <Select
@@ -290,7 +334,7 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Fecha */}
-                    <Grid item xs={12} md={3}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                         <TextField
                             fullWidth
                             label="Fecha *"
@@ -305,7 +349,7 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Kilometraje */}
-                    <Grid item xs={12} md={3}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                         <TextField
                             fullWidth
                             label="Kilometraje al Servicio *"
@@ -320,7 +364,7 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Costo */}
-                    <Grid item xs={12} md={3}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                         <TextField
                             fullWidth
                             label="Costo (Bs)"
@@ -334,7 +378,7 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Estado */}
-                    <Grid item xs={12} md={3}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                         <FormControl fullWidth size="small" required>
                             <InputLabel>Estado *</InputLabel>
                             <Select
@@ -351,7 +395,7 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Técnico */}
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                         <TextField
                             fullWidth
                             label="Técnico Responsable *"
@@ -365,7 +409,7 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Descripción */}
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <TextField
                             fullWidth
                             label="Descripción del Trabajo *"
@@ -381,7 +425,7 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* SECCIÓN DE REPUESTOS */}
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mt: 1, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                             <InventoryIcon fontSize="small" color="primary" />
                             Repuestos Utilizados
@@ -436,7 +480,7 @@ const MantenimientoForm = ({ mantenimiento, onSubmit, onCancel, loading }) => {
                     </Grid>
 
                     {/* Observaciones */}
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <TextField
                             fullWidth
                             label="Observaciones Adicionales"

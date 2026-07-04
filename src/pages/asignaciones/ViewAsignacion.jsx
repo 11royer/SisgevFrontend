@@ -26,6 +26,7 @@ import Layout from '../../layout/Layout';
 import { asignacionService } from '../../services/AsignacionService';
 import EstadoAsignacionBadge from '../../components/asignaciones/EstadoAsignacionBadge';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission, hasAnyPermission } from '../../utils/hasPermission';
 
 const ViewAsignacion = () => {
     const { id } = useParams();
@@ -37,7 +38,16 @@ const ViewAsignacion = () => {
     const [error, setError] = useState(null);
     const [finalizando, setFinalizando] = useState(false);
 
-    const puedeEditar = ['Administrador', 'Operador'].includes(currentUser?.rol?.nombre);
+    // PERMISOS - VERIFICACIÓN POR PERMISOS
+    const puedeFinalizar = hasPermission(currentUser, 'finalizar_asignaciones');
+    const puedeEditar = hasPermission(currentUser, 'editar_asignaciones');
+    
+    // Para acciones que requieren cualquiera de estos permisos
+    const puedeEscribir = hasAnyPermission(currentUser, [
+        'finalizar_asignaciones',
+        'editar_asignaciones'
+    ]);
+
     const esActiva = asignacion && !asignacion.fecha_retorno;
 
     useEffect(() => {
@@ -125,7 +135,8 @@ const ViewAsignacion = () => {
                         <EstadoAsignacionBadge esActiva={esActiva} />
                     </Box>
                     <Box sx={{ display: 'flex', gap: '1rem' }}>
-                        {esActiva && puedeEditar && (
+                        {/* BOTÓN FINALIZAR - Solo si está activa Y tiene permiso */}
+                        {esActiva && puedeFinalizar && (
                             <Button
                                 variant="contained"
                                 color="success"
@@ -136,6 +147,7 @@ const ViewAsignacion = () => {
                                 {finalizando ? 'Finalizando...' : 'Finalizar Asignación'}
                             </Button>
                         )}
+                        {/* BOTÓN EDITAR - Solo si está finalizada Y tiene permiso */}
                         {!esActiva && puedeEditar && (
                             <Button
                                 variant="outlined"
@@ -148,11 +160,11 @@ const ViewAsignacion = () => {
                     </Box>
                 </Box>
 
-                {/* Tarjeta principal */}
+                {/* TARJETA PRINCIPAL */}
                 <Paper elevation={3} sx={{ p: '1.5rem', borderRadius: '0.75rem' }}>
                     <Grid container spacing="3rem">
                         {/* Vehículo asignado */}
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold', color: 'primary.main' }}>
                                 <DirectionsCarIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                                 Vehículo Asignado
@@ -173,7 +185,7 @@ const ViewAsignacion = () => {
                         </Grid>
 
                         {/* Conductor */}
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold', color: 'primary.main' }}>
                                 <PersonIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                                 Conductor
@@ -194,21 +206,21 @@ const ViewAsignacion = () => {
                         </Grid>
 
                         {/* Detalles de la asignación */}
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Divider sx={{ my: '1rem' }} />
                             <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold', color: 'primary.main' }}>
                                 <AssignmentIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                                 Detalles de la Comisión
                             </Typography>
                             <Grid container spacing="2rem">
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Fecha de Asignación</Typography>
                                     <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', mt: 0.5 }}>
                                         <CalendarTodayIcon fontSize="small" color="action" />
                                         {new Date(asignacion.fecha_asignacion).toLocaleString()}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Fecha de Retorno</Typography>
                                     <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', mt: 0.5 }}>
                                         <CalendarTodayIcon fontSize="small" color="action" />
@@ -217,7 +229,7 @@ const ViewAsignacion = () => {
                                             : 'Pendiente'}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12}>
+                                <Grid size={{ xs: 12 }}>
                                     <Typography variant="caption" color="text.secondary">Destino / Misión</Typography>
                                     <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem', mt: 0.5 }}>
                                         <LocationOnIcon fontSize="small" color="action" />
@@ -225,7 +237,7 @@ const ViewAsignacion = () => {
                                     </Typography>
                                 </Grid>
                                 {asignacion.observaciones && (
-                                    <Grid item xs={12}>
+                                    <Grid size={{ xs: 12 }}>
                                         <Typography variant="caption" color="text.secondary">Observaciones</Typography>
                                         <Paper variant="outlined" sx={{ p: '0.75rem', bgcolor: 'action.hover', mt: 0.5 }}>
                                             <Typography variant="body2">{asignacion.observaciones}</Typography>
@@ -236,7 +248,7 @@ const ViewAsignacion = () => {
                         </Grid>
 
                         {/* Registrado por */}
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Divider sx={{ my: '1rem' }} />
                             <Typography variant="caption" color="text.secondary">
                                 Registrado por: {asignacion.usuario?.nombre_completo || 'Sistema'}

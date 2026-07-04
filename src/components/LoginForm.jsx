@@ -1,4 +1,3 @@
-// src/components/LoginForm.jsx
 import React, { useState } from "react";
 import {
   Box,
@@ -21,7 +20,6 @@ export default function LoginForm({ onSubmit }) {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-
   // MANEJADOR DE ENVÍO DEL FORMULARIO
   const submit = async (e) => {
     e.preventDefault();
@@ -31,7 +29,6 @@ export default function LoginForm({ onSubmit }) {
     try {
       await onSubmit({ credencial, contraseña });
     } catch (err) {
-      // MANEJO DE ERRORES DETALLADO
       const msg =
         err?.response?.data?.message ||
         err?.message ||

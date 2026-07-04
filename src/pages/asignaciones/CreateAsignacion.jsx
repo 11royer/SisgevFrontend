@@ -7,6 +7,7 @@ import Layout from '../../layout/Layout';
 import AsignacionForm from '../../components/asignaciones/AsignacionForm';
 import { asignacionService } from '../../services/AsignacionService';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission } from '../../utils/hasPermission';
 
 const CreateAsignacion = () => {
     const navigate = useNavigate();
@@ -16,10 +17,15 @@ const CreateAsignacion = () => {
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState(null);
 
-    if (!['Administrador', 'Operador'].includes(currentUser?.rol?.nombre)) {
+    const puedeCrear = hasPermission(currentUser, 'crear_asignaciones');
+
+    if (!puedeCrear) {
         return (
             <Layout>
-                <Alert severity="error" sx={{ m: 2 }}>No tienes permisos para crear asignaciones.</Alert>
+                <Alert severity="error" sx={{ m: 2 }}>
+                    No tienes permisos para crear asignaciones.
+                    Se requiere el permiso: <strong>crear_asignaciones</strong>
+                </Alert>
             </Layout>
         );
     }

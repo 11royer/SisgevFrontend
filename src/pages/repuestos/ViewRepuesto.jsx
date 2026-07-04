@@ -30,6 +30,7 @@ import Layout from '../../layout/Layout';
 import { repuestoService } from '../../services/RepuestoService';
 import StockBadge from '../../components/repuestos/StockBadge';
 import useAuth from '../../auth/UseAuth';
+import { hasPermission } from '../../utils/hasPermission';
 
 const ViewRepuesto = () => {
     const { id } = useParams();
@@ -41,7 +42,7 @@ const ViewRepuesto = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const puedeEditar = ['Administrador', 'Técnico'].includes(currentUser?.rol?.nombre);
+    const puedeEditar = hasPermission(currentUser, 'editar_repuestos');
 
     useEffect(() => {
         cargarDatos();
@@ -125,6 +126,7 @@ const ViewRepuesto = () => {
                             cantidadMinima={repuesto.cantidad_minima}
                         />
                     </Box>
+                    {/* BOTÓN EDITAR - SOLO SI TIENE PERMISO */}
                     {puedeEditar && (
                         <Button variant="contained" startIcon={<EditIcon />} onClick={handleEditar}>
                             Editar Repuesto
@@ -132,11 +134,11 @@ const ViewRepuesto = () => {
                     )}
                 </Box>
 
-                {/* Información principal */}
+                {/* INFORMACIÓN PRINCIPAL */}
                 <Paper elevation={3} sx={{ p: '1.5rem', mb: '1.5rem', borderRadius: '0.75rem' }}>
                     <Grid container spacing="3rem">
                         {/* Stock */}
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold', color: 'primary.main' }}>
                                 <InventoryIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                                 Control de Stock
@@ -175,7 +177,7 @@ const ViewRepuesto = () => {
                         </Grid>
 
                         {/* Ubicación y Vida Útil */}
-                        <Grid item xs={12} md={6}>
+                        <Grid size={{ xs: 12, md: 6 }}>
                             <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold', color: 'primary.main' }}>
                                 <LocationOnIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                                 Almacenamiento y Vida Útil
@@ -183,13 +185,13 @@ const ViewRepuesto = () => {
                             <Card variant="outlined">
                                 <CardContent>
                                     <Grid container spacing={2}>
-                                        <Grid item xs={12}>
+                                        <Grid size={{ xs: 12 }}>
                                             <Typography variant="body2" color="text.secondary">Ubicación</Typography>
                                             <Typography variant="body1">
                                                 {repuesto.ubicacion || 'No especificada'}
                                             </Typography>
                                         </Grid>
-                                        <Grid item xs={6}>
+                                        <Grid size={{ xs: 6 }}>
                                             <Typography variant="body2" color="text.secondary">
                                                 <SpeedIcon fontSize="small" sx={{ mr: 0.5, verticalAlign: 'middle' }} />
                                                 Vida Útil (km)
@@ -198,7 +200,7 @@ const ViewRepuesto = () => {
                                                 {repuesto.vida_util_km ? `${repuesto.vida_util_km.toLocaleString()} km` : 'No definida'}
                                             </Typography>
                                         </Grid>
-                                        <Grid item xs={6}>
+                                        <Grid size={{ xs: 6 }}>
                                             <Typography variant="body2" color="text.secondary">
                                                 <CalendarTodayIcon fontSize="small" sx={{ mr: 0.5, verticalAlign: 'middle' }} />
                                                 Vida Útil (días)
@@ -213,7 +215,7 @@ const ViewRepuesto = () => {
                         </Grid>
 
                         {/* Descripción */}
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Divider sx={{ my: '1rem' }} />
                             <Typography variant="h6" sx={{ mb: '1rem', fontWeight: 'bold', color: 'primary.main' }}>
                                 Descripción
