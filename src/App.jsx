@@ -6,6 +6,7 @@ import Usuarios from './pages/Usuarios';
 import Roles from './pages/Roles';
 import Bitacora from './pages/Bitacora';
 import Perfil from './pages/Perfil';
+import UnidadesPage from './pages/unidades/UnidadesPage';
 
 // Rutas de Vehículos
 import VehiculosPage from './pages/vehiculos';
@@ -36,7 +37,7 @@ import ViewRepuesto from './pages/repuestos/ViewRepuesto';
 // REPORTES
 import ReportesPage from './pages/reportes';
 
-// SPRINT 7: FORMULARIOS DINÁMICOS (CEMAPOL)
+//FORMULARIOS DINÁMICOS (CEMAPOL)
 import FormulariosPage from './pages/formularios';
 import FormularioEditor from './pages/formularios/FormularioEditor';
 import FormularioHistorial from './pages/formularios/FormularioHistorial';
@@ -59,6 +60,9 @@ export default function AppRoutes() {
       <Route path="/usuarios" element={<PrivateRoute><Usuarios /></PrivateRoute>} />
       <Route path="/roles" element={<PrivateRoute><Roles /></PrivateRoute>} />
       <Route path="/bitacora" element={<PrivateRoute><Bitacora /></PrivateRoute>} />
+      
+      {/* === UNIDADES == */}
+      <Route path="/unidades" element={<PrivateRoute><UnidadesPage /></PrivateRoute>} />
       
       {/* ===== VEHÍCULOS ===== */}
       <Route path="/vehiculos" element={<PrivateRoute><VehiculosPage /></PrivateRoute>} />

@@ -155,7 +155,7 @@ const Perfil = () => {
             data.append('email', formData.email);
             if (formData.telefono) data.append('telefono', formData.telefono);
             if (formData.foto_perfil) data.append('foto_perfil', formData.foto_perfil);
-            data.append('_method', 'PUT'); // Necesario para Laravel con multipart/form-data
+            data.append('_method', 'PUT');
 
             await usuarioService.update(usuario.id, data);
             await cargarDatosPerfil();

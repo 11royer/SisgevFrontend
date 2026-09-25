@@ -17,6 +17,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PersonIcon from '@mui/icons-material/Person';
+import ApartmentIcon from '@mui/icons-material/Apartment';
 
 const UsuarioTable = ({ usuarios, onEdit, onDelete, onView }) => {
   return (
@@ -29,6 +30,7 @@ const UsuarioTable = ({ usuarios, onEdit, onDelete, onView }) => {
             <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Usuario</TableCell>
             <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Cargo / Función</TableCell>
             <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Rol</TableCell>
+            <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Unidad</TableCell>
             <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>Contacto</TableCell>
             <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default', textAlign: 'center' }}>Acciones</TableCell>
           </TableRow>
@@ -73,6 +75,33 @@ const UsuarioTable = ({ usuarios, onEdit, onDelete, onView }) => {
                 />
               </TableCell>
 
+              {/* UNIDAD INSTITUCIONAL */}
+              <TableCell>
+                {usuario.unidad ? (
+                  <Tooltip title={usuario.unidad.nombre} arrow>
+                    <Chip
+                      icon={<ApartmentIcon />}
+                      label={usuario.unidad.sigla || usuario.unidad.nombre}
+                      size="small"
+                      color="secondary"
+                      variant="outlined"
+                      sx={{ 
+                        fontWeight: 'bold',
+                        maxWidth: '150px',
+                        '& .MuiChip-label': {
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        },
+                      }}
+                    />
+                  </Tooltip>
+                ) : (
+                  <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    Sin asignar
+                  </Typography>
+                )}
+              </TableCell>
+
               {/* COLUMNA CONTACTO */}
               <TableCell>
                 <Typography variant="caption" display="block">{usuario.email}</Typography>
@@ -115,7 +144,7 @@ const UsuarioTable = ({ usuarios, onEdit, onDelete, onView }) => {
 
           {usuarios.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} sx={{ textAlign: 'center', py: 3 }}>
+              <TableCell colSpan={7} sx={{ textAlign: 'center', py: 3 }}>
                 <Typography color="text.secondary">
                   No se encontraron usuarios registrados.
                 </Typography>

@@ -16,24 +16,35 @@ import {
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { roleService } from '../../services/RoleService';
+import { useCatalogoUnidades } from '../../hooks/useCatalogoUnidades';
+import useAuth from '../../auth/UseAuth';
 
 const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
-  // -- ESTADOS --
-  // Actualización Paso 2: Inicializamos 'contraseña' vacía siempre.
+  const { esAdministrador } = useAuth();
+  const esAdmin = esAdministrador();
+
+  // Hook del catálogo de unidades
+  const {
+    unidades,
+    loading: cargandoUnidades
+  } = useCatalogoUnidades();
+
+  // ESTADOS
   const [formData, setFormData] = useState({
     nombre_completo: usuario?.nombre_completo || '',
     usuario: usuario?.usuario || '',
     email: usuario?.email || '',
     telefono: usuario?.telefono || '',
     cargo: usuario?.cargo || '',
-    id_rol: usuario?.id_rol || '', 
-    contraseña: '', //Evita error de 'uncontrolled input' y permite editar
+    id_rol: usuario?.id_rol || '',
+    unidad_id: usuario?.unidad_id || '',
+    contraseña: '',
   });
 
-  const [roles, setRoles] = useState([]); 
-  const [cargandoRoles, setCargandoRoles] = useState(false); 
+  const [roles, setRoles] = useState([]);
+  const [cargandoRoles, setCargandoRoles] = useState(false);
 
-  // -- EFECTO PARA CARGAR ROLES --
+  // EFECTO PARA CARGAR ROLES
   useEffect(() => {
     const cargarRoles = async () => {
       try {
@@ -49,14 +60,22 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
     cargarRoles();
   }, []);
 
-  // -- MANEJADORES --
+  // MANEJADORES
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+
+    // Convertir unidad_id vacío ("") a null antes de enviar
+    // para que el backend reciba null en lugar de cadena vacía.
+    const dataAEnviar = {
+      ...formData,
+      unidad_id: formData.unidad_id === '' ? null : formData.unidad_id,
+    };
+
+    onSubmit(dataAEnviar);
   };
 
   return (
@@ -151,6 +170,43 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
             </FormControl>
           </Grid>
 
+          {/* Campo Unidad Institucional */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Unidad Institucional</InputLabel>
+              <Select
+                name="unidad_id"
+                value={formData.unidad_id}
+                onChange={handleChange}
+                label="Unidad Institucional"
+                disabled={cargandoUnidades}
+              >
+                <MenuItem value="">
+                  <em>Sin unidad asignada (acceso global)</em>
+                </MenuItem>
+                {unidades.map((unidad) => (
+                  <MenuItem key={unidad.id} value={unidad.id}>
+                    {unidad.sigla 
+                      ? `${unidad.sigla} - ${unidad.nombre}` 
+                      : unidad.nombre
+                    }
+                  </MenuItem>
+                ))}
+              </Select>
+              {cargandoUnidades && (
+                <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
+                  Cargando unidades...
+                </Typography>
+              )}
+              <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.secondary' }}>
+                {esAdmin 
+                  ? 'Opcional: si se deja vacío, el usuario verá todas las unidades.'
+                  : 'Asigne la unidad a la que pertenece el usuario.'
+                }
+              </Typography>
+            </FormControl>
+          </Grid>
+
           {/* Campo: Teléfono */}
           <Grid size={{ xs: 12, md: 6 }}>
             <TextField
@@ -163,25 +219,20 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
             />
           </Grid>
 
-          {/*  SECCIÓN DE CONTRASEÑA 
-             Ahora siempre visible, pero opcional si estamos editando.
-          */}
+          {/*  SECCIÓN DE CONTRASEÑA */}
           <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
-              // Cambiamos el label dependiendo si es nuevo o edición
               label={usuario ? "Nueva Contraseña (Dejar vacío para no cambiar)" : "Contraseña Inicial"}
               name="contraseña"
               type="password"
               onChange={handleChange}
-              // Solo es required si NO existe usuario (modo crear)
               required={!usuario} 
               size="small"
               helperText={usuario 
                   ? "Escriba aquí solo si desea resetear la clave del usuario." 
                   : "Mínimo 6 caracteres"
               }
-              // Aseguramos que el valor no sea undefined
               value={formData.contraseña || ''} 
             />
           </Grid>
@@ -204,7 +255,7 @@ const UsuarioForm = ({ usuario, onSubmit, onCancel, loading }) => {
             variant="contained"
             color="primary"
             startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
-            disabled={loading || cargandoRoles}
+            disabled={loading || cargandoRoles || cargandoUnidades}
           >
             {loading ? 'Guardando...' : 'Guardar Funcionario'}
           </Button>

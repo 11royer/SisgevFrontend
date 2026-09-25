@@ -19,7 +19,17 @@ import {
     Tooltip,
     Card,
     CardContent,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
 } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/Download';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
@@ -33,16 +43,18 @@ import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../../layout/Layout';
 import EstadoBadge from '../../components/vehiculos/EstadoBadge';
 import { vehiculoService } from '../../services/VehiculoService';
 import { formularioService } from '../../services/FormularioService';
 import FormulariosTab from '../../components/vehiculos/FormulariosTab';
+import DocumentUploader from '../../components/vehiculos/DocumentUploader';
 import useAuth from '../../auth/UseAuth';
 import { hasPermission, hasAnyPermission } from '../../utils/hasPermission';
 
-// COMPONENTE: DocumentosTab (sin cambios en Grids, solo permisos)
+// COMPONENTE: DocumentosTab (MEJORADO CON SUBIDA)
 const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
     const [fotos, setFotos] = useState([]);
     const [documentos, setDocumentos] = useState([]);
@@ -52,14 +64,29 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
     const [success, setSuccess] = useState(null);
     const { user: currentUser } = useAuth();
 
+    // Estados para el diálogo de subida de documentos
+    const [openDialog, setOpenDialog] = useState(false);
+    const [formData, setFormData] = useState({
+        tipo_documento: '',
+        descripcion: '',
+        archivo: null,
+    });
+    const [dialogLoading, setDialogLoading] = useState(false);
+
     const puedeSubirDocumentos = hasPermission(currentUser, 'subir_documentos');
     const puedeEliminarDocumentos = hasPermission(currentUser, 'eliminar_documentos');
     const puedeVerDocumentos = hasPermission(currentUser, 'ver_documentos');
-    
-    const puedeEditarDocumentos = hasAnyPermission(currentUser, [
-        'subir_documentos',
-        'eliminar_documentos'
-    ]);
+
+    const tiposDocumento = [
+        'SOAT',
+        'Revisión Técnica',
+        'Tarjeta de Circulación',
+        'Póliza de Seguro',
+        'Factura de Compra',
+        'Manual del Propietario',
+        'Mantenimiento',
+        'Otro'
+    ];
 
     useEffect(() => {
         cargarDatos();
@@ -69,8 +96,15 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
         try {
             setLoading(true);
             setError(null);
-            const response = await formularioService.getByVehiculo(vehiculoId);
-            setFotos(response.data.fotos || []);
+
+            // 1. Cargar Fotos del Kárdex
+            const responseKardex = await formularioService.getByVehiculo(vehiculoId);
+            setFotos(responseKardex.data.fotos || []);
+
+            // 2. Cargar Documentos Reales (SOAT, ITV, etc.)
+            const responseDocs = await vehiculoService.getDocumentos(vehiculoId);
+            setDocumentos(responseDocs.data.data || responseDocs.data || []);
+
         } catch (error) {
             console.error('Error cargando documentos:', error);
             setError('Error al cargar los documentos');
@@ -129,6 +163,145 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
         }
     };
 
+    // MANEJADORES DE DOCUMENTOS
+    const handleOpenDialog = () => {
+        setFormData({ tipo_documento: '', descripcion: '', archivo: null });
+        setError(null);
+        setOpenDialog(true);
+    };
+
+    const handleCloseDialog = () => {
+        setOpenDialog(false);
+        setFormData({ tipo_documento: '', descripcion: '', archivo: null });
+    };
+
+    const handleFileSelect = (file) => {
+        setFormData(prev => ({ ...prev, archivo: file }));
+    };
+
+    const handleSubirDocumento = async () => {
+        if (!formData.tipo_documento || !formData.archivo) {
+            setError('Por favor complete todos los campos obligatorios');
+            return;
+        }
+
+        try {
+            setDialogLoading(true);
+            setError(null);
+
+            const data = new FormData();
+            data.append('vehiculo_id', vehiculoId);
+            data.append('tipo_documento', formData.tipo_documento);
+            data.append('archivo', formData.archivo);
+            if (formData.descripcion) {
+                data.append('descripcion', formData.descripcion);
+            }
+
+            await vehiculoService.subirDocumento(data);
+
+            await cargarDatos();
+            setSuccess('Documento subido exitosamente');
+            setTimeout(() => setSuccess(null), 3000);
+            handleCloseDialog();
+
+        } catch (error) {
+            console.error('Error subiendo documento:', error);
+            setError(error.response?.data?.message || 'Error al subir el documento');
+        } finally {
+            setDialogLoading(false);
+        }
+    };
+
+    const handleEliminarDocumento = async (documentoId) => {
+        if (!window.confirm('¿Eliminar este documento?')) return;
+        try {
+            await vehiculoService.eliminarDocumento(documentoId);
+            await cargarDatos();
+            setSuccess('Documento eliminado correctamente');
+            setTimeout(() => setSuccess(null), 3000);
+        } catch (error) {
+            console.error('Error eliminando documento:', error);
+            setError('Error al eliminar el documento');
+        }
+    };
+
+    // ============================================================
+    // FUNCIÓN DE DESCARGA ROBUSTA (Maneja Base64 y URLs viejas)
+    // ============================================================
+    const descargarDocumento = (documento) => {
+        try {
+            const url = documento.archivo_url;
+
+            // CASO 1: Es un data:URL (Base64 - documento nuevo)
+            if (url && url.startsWith('data:')) {
+                const partes = url.split(',');
+                if (partes.length < 2) {
+                    setError('El formato del documento es inválido');
+                    return;
+                }
+
+                const header = partes[0];
+                const base64Data = partes[1];
+
+                if (!header.includes('base64')) {
+                    setError('El documento no está en formato Base64');
+                    return;
+                }
+
+                const mimeType = header.match(/data:([^;]+)/)?.[1] || 'application/octet-stream';
+
+                // Determinar extensión
+                let extension = 'bin';
+                if (mimeType.includes('pdf')) extension = 'pdf';
+                else if (mimeType.includes('jpeg') || mimeType.includes('jpg')) extension = 'jpg';
+                else if (mimeType.includes('png')) extension = 'png';
+
+                // Convertir Base64 a Blob
+                const byteCharacters = atob(base64Data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: mimeType });
+
+                // Crear URL temporal y descargar
+                const blobUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = `${documento.tipo_documento.replace(/\s+/g, '_')}_${documento.id}.${extension}`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(blobUrl);
+                return;
+            }
+
+            // CASO 2: Es un /storage/... (documento viejo - URL relativa)
+            if (url && (url.startsWith('/storage') || url.startsWith('storage'))) {
+                const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+                const cleanBase = baseURL.replace(/\/api$/, '').replace(/\/$/, '');
+                const cleanUrl = url.startsWith('/') ? url : '/' + url;
+                const urlCompleta = `${cleanBase}${cleanUrl}`;
+                window.open(urlCompleta, '_blank');
+                return;
+            }
+
+            // CASO 3: Ya es una URL absoluta (http/https)
+            if (url && url.startsWith('http')) {
+                window.open(url, '_blank');
+                return;
+            }
+
+            // CASO 4: No hay URL o formato desconocido
+            setError('El documento no tiene una URL válida');
+
+        } catch (error) {
+            console.error('Error al descargar documento:', error);
+            setError('Error al descargar el documento: ' + error.message);
+        }
+    };
+
     if (!puedeVerDocumentos) {
         return (
             <Alert severity="info" sx={{ borderRadius: '0.5rem' }}>
@@ -159,6 +332,7 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
                 </Alert>
             )}
 
+            {/* SECCIÓN KÁRDEX (FOTOS) */}
             <Paper
                 elevation={2}
                 sx={{
@@ -297,40 +471,159 @@ const DocumentosTab = ({ vehiculoId, vehiculoPlaca }) => {
                 </Typography>
             </Paper>
 
-            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2, color: 'text.primary' }}>
-                📄 Documentos del Vehículo
-            </Typography>
+            {/*  SECCIÓN DOCUMENTOS DEL VEHÍCULO (SOAT, ITV, etc.) */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" sx={{ color: 'text.primary' }}>
+                    📄 Documentos del Vehículo
+                </Typography>
+                {puedeSubirDocumentos && (
+                    <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<CloudUploadIcon />}
+                        onClick={handleOpenDialog}
+                        sx={{ borderRadius: '0.5rem' }}
+                    >
+                        Subir Documento
+                    </Button>
+                )}
+            </Box>
 
             {documentos.length === 0 ? (
                 <Alert severity="info" sx={{ borderRadius: '0.5rem' }}>
-                    No hay documentos adicionales registrados. 
+                    No hay documentos adicionales registrados.
                     {puedeSubirDocumentos && ' Puedes subir SOAT, ITV, facturas, etc.'}
                 </Alert>
             ) : (
                 <Grid container spacing={2}>
                     {documentos.map((doc) => (
                         <Grid size={{ xs: 12, sm: 6, md: 4 }} key={doc.id}>
-                            <Paper variant="outlined" sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Paper
+                                variant="outlined"
+                                sx={{
+                                    p: 2,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 2,
+                                    borderRadius: '0.75rem',
+                                    transition: 'all 0.2s',
+                                    '&:hover': {
+                                        boxShadow: 2,
+                                        borderColor: 'primary.main',
+                                    },
+                                }}
+                            >
                                 <DescriptionIcon color="primary" fontSize="large" />
-                                <Box>
+                                <Box sx={{ flex: 1 }}>
                                     <Typography variant="body2" fontWeight="bold">
                                         {doc.tipo_documento}
                                     </Typography>
                                     <Typography variant="caption" display="block" color="text.secondary">
                                         {new Date(doc.fecha_subida).toLocaleDateString()}
                                     </Typography>
-                                    <Button size="small" href={doc.archivo_url} target="_blank" color="primary">
-                                        Ver Archivo
-                                    </Button>
+                                    {doc.descripcion && (
+                                        <Typography variant="caption" display="block" color="text.secondary" noWrap>
+                                            {doc.descripcion}
+                                        </Typography>
+                                    )}
+                                    <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                                        <Button
+                                            size="small"
+                                            onClick={() => descargarDocumento(doc)}
+                                            color="primary"
+                                            variant="outlined"
+                                            startIcon={<DownloadIcon />}
+                                            sx={{ borderRadius: '0.5rem' }}
+                                        >
+                                            Descargar
+                                        </Button>
+                                        {puedeEliminarDocumentos && (
+                                            <IconButton
+                                                size="small"
+                                                color="error"
+                                                onClick={() => handleEliminarDocumento(doc.id)}
+                                            >
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
+                                        )}
+                                    </Box>
                                 </Box>
                             </Paper>
                         </Grid>
                     ))}
                 </Grid>
             )}
+
+            {/*  DIÁLOGO PARA SUBIR DOCUMENTO */}
+            <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+                <DialogTitle>
+                    <Typography variant="h6" fontWeight="bold" component="div">
+                        Subir Nuevo Documento
+                    </Typography>
+                </DialogTitle>
+                <DialogContent>
+                    <Box sx={{ mt: 2 }}>
+                        {error && (
+                            <Alert severity="error" sx={{ mb: 2, borderRadius: '0.5rem' }}>
+                                {error}
+                            </Alert>
+                        )}
+
+                        <FormControl fullWidth size="small" required sx={{ mb: 2 }}>
+                            <InputLabel>Tipo de Documento *</InputLabel>
+                            <Select
+                                value={formData.tipo_documento}
+                                onChange={(e) => setFormData(prev => ({ ...prev, tipo_documento: e.target.value }))}
+                                label="Tipo de Documento *"
+                                disabled={dialogLoading}
+                            >
+                                <MenuItem value=""><em>Seleccionar tipo</em></MenuItem>
+                                {tiposDocumento.map(tipo => (
+                                    <MenuItem key={tipo} value={tipo}>{tipo}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        <TextField
+                            fullWidth
+                            label="Descripción (opcional)"
+                            value={formData.descripcion}
+                            onChange={(e) => setFormData(prev => ({ ...prev, descripcion: e.target.value }))}
+                            multiline
+                            rows={2}
+                            size="small"
+                            disabled={dialogLoading}
+                            sx={{ mb: 2 }}
+                        />
+
+                        <DocumentUploader
+                            onFileSelect={handleFileSelect}
+                            onError={(err) => setError(err)}
+                            acceptedTypes=".pdf,.jpg,.jpeg,.png"
+                            maxSizeMB={5}
+                            label="Seleccionar archivo"
+                        />
+                    </Box>
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={handleCloseDialog} disabled={dialogLoading}>
+                        Cancelar
+                    </Button>
+                    <Button
+                        onClick={handleSubirDocumento}
+                        variant="contained"
+                        color="primary"
+                        disabled={dialogLoading || !formData.tipo_documento || !formData.archivo}
+                        startIcon={dialogLoading ? <CircularProgress size={20} /> : <CloudUploadIcon />}
+                    >
+                        {dialogLoading ? 'Subiendo...' : 'Subir Documento'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };
+
 
 // COMPONENTE PRINCIPAL: ViewVehiculo
 const ViewVehiculo = () => {

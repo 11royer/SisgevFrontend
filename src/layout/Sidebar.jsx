@@ -22,22 +22,33 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import SecurityIcon from '@mui/icons-material/Security';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import ApartmentIcon from '@mui/icons-material/Apartment';
 import EscudoMiniatura from '../assets/escudo.webp';
 import useAuth from '../auth/UseAuth';
 import { hasPermission } from '../utils/hasPermission';
 
 // CONFIGURACIÓN DE ITEMS DEL MENÚ CON PERMISO REQUERIDO
 const menuItems = [
+  // ===== GENERALES (siempre visibles) =====
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard', permiso: null },
   { text: 'Mi Perfil', icon: <AccountCircleIcon />, path: '/perfil', permiso: null },
+
+  // ===== ADMINISTRACIÓN =====
   { text: 'Usuarios', icon: <PeopleIcon />, path: '/usuarios', permiso: 'ver_usuarios' },
   { text: 'Roles', icon: <SecurityIcon />, path: '/roles', permiso: 'gestionar_roles' },
   { text: 'Bitácora', icon: <AccessTimeIcon />, path: '/bitacora', permiso: 'ver_bitacora' },
+  { text: 'Unidades', icon: <ApartmentIcon />, path: '/unidades', permiso: 'gestionar_unidades' },
+
+  // ===== OPERACIONES =====
   { text: 'Vehículos', icon: <DirectionsCarIcon />, path: '/vehiculos', permiso: 'ver_vehiculos' },
   { text: 'Conductores', icon: <PeopleIcon />, path: '/conductores', permiso: 'ver_conductores' },
   { text: 'Asignaciones', icon: <AssignmentIcon />, path: '/asignaciones', permiso: 'ver_asignaciones' },
+
+  // ===== ÁREA TÉCNICA =====
   { text: 'Mantenimientos', icon: <BuildIcon />, path: '/mantenimientos', permiso: 'ver_mantenimientos' },
   { text: 'Repuestos', icon: <InventoryIcon />, path: '/repuestos', permiso: 'ver_repuestos' },
+
+  // ===== ANÁLISIS =====
   { text: 'Reportes', icon: <BarChartIcon />, path: '/reportes', permiso: 'ver_reportes' },
 ];
 

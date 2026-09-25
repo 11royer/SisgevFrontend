@@ -12,14 +12,39 @@ import {
   Select,
   Alert,
   CircularProgress,
+  Chip,
+  Tooltip,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
+import LockIcon from '@mui/icons-material/Lock';
 import ClasificacionService from "../../services/ClasificacionService";
+import { useCatalogoUnidades } from '../../hooks/useCatalogoUnidades';
+import useAuth from '../../auth/UseAuth';
 
 const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
+  // Hook de autenticación
+  const { user: currentUser, esAdministrador } = useAuth();
+  const esAdmin = esAdministrador();
+  const tieneUnidad = !!currentUser?.unidad_id;
 
-  // ESTADO INICIAL CON VALORES DEL PROP 'vehiculo'
+  // Hook del catálogo de unidades (reemplaza los datos hardcodeados)
+  const {
+    unidades,
+    loading: cargandoUnidades,
+  } = useCatalogoUnidades();
+
+  // ESTADO INICIAL DEL FORMULARIO
+  // La unidad_id se calcula con lógica contextual:
+  //   1. Si estamos editando un vehículo: usar su unidad_id.
+  //   2. Si estamos creando y el usuario NO es Admin: usar su propia unidad.
+  //   3. Si estamos creando y el usuario ES Admin: dejar vacío (elegirá).
+  const calcularUnidadInicial = () => {
+    if (vehiculo?.unidad_id) return vehiculo.unidad_id;
+    if (!esAdmin && currentUser?.unidad_id) return currentUser.unidad_id;
+    return '';
+  };
+
   const [formData, setFormData] = useState({
     // IDENTIFICACIÓN
     placa: vehiculo?.placa || '',
@@ -45,7 +70,7 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
     kilometraje_actual: vehiculo?.kilometraje_actual || 0,
 
     // UBICACIÓN
-    unidad_id: vehiculo?.unidad_id || '',
+    unidad_id: calcularUnidadInicial(),
     distrito: vehiculo?.distrito || 'Potosí',
     destino: vehiculo?.destino || '',
     fecha_adquisicion: vehiculo?.fecha_adquisicion || '',
@@ -53,12 +78,10 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
     observaciones: vehiculo?.observaciones || '',
   });
 
-  const [unidades, setUnidades] = useState([]);
-  const [cargandoUnidades, setCargandoUnidades] = useState(true);
   const [clasificaciones, setClasificaciones] = useState([]);
   const [cargandoClasificaciones, setCargandoClasificaciones] = useState(true);
 
-  // ACTUALIZAR CUANDO EL PROP 'vehiculo' CAMBIA
+  // EFECTO: ACTUALIZAR CUANDO EL PROP 'vehiculo' CAMBIA
   useEffect(() => {
     if (vehiculo) {
       setFormData({
@@ -79,7 +102,7 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
         estado_operativo: vehiculo.estado_operativo || 'Operativo',
         en_servicio: vehiculo.en_servicio ?? true,
         kilometraje_actual: vehiculo.kilometraje_actual || 0,
-        unidad_id: vehiculo.unidad_id || '',
+        unidad_id: vehiculo.unidad_id || calcularUnidadInicial(),
         distrito: vehiculo.distrito || 'Potosí',
         destino: vehiculo.destino || '',
         fecha_adquisicion: vehiculo.fecha_adquisicion || '',
@@ -89,33 +112,13 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
     }
   }, [vehiculo]);
 
-  // Cargar Unidades
-  useEffect(() => {
-    const cargarUnidades = async () => {
-      try {
-        setCargandoUnidades(true);
-        // Aquí deberías obtener las unidades desde la API
-        setUnidades([
-          { id: 1, nombre: 'Comando Departamental de Potosí', sigla: 'CDP' },
-          { id: 2, nombre: 'EPI D-11 Achachicala', sigla: 'EPI D-11' },
-        ]);
-      } catch (error) {
-        console.error('Error cargando unidades:', error);
-      } finally {
-        setCargandoUnidades(false);
-      }
-    };
-    cargarUnidades();
-  }, []);
-
-  // Cargar Clasificaciones
+  // EFECTO: CARGAR CLASIFICACIONES
   useEffect(() => {
     const cargarClasificaciones = async () => {
       try {
         setCargandoClasificaciones(true);
         const data = await ClasificacionService.getAll();
         setClasificaciones(Array.isArray(data) ? data : []);
-        console.log('📋 Clasificaciones cargadas:', data); // Depuración
       } catch (error) {
         console.error('Error cargando clasificaciones:', error);
         setClasificaciones([]);
@@ -126,6 +129,7 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
     cargarClasificaciones();
   }, []);
 
+  // MANEJADORES
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -139,10 +143,18 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
     onSubmit(formData);
   };
 
+  // CONSTANTES DE OPCIONES
   const tiposVehiculo = ['Sedán', 'Camioneta', 'Patrullero', 'Motocicleta', 'Bus', 'Ambulancia', 'Camión', 'Vagoneta', 'Otro'];
   const colores = ['Blanco', 'Negro', 'Gris', 'Plateado', 'Azul', 'Rojo', 'Verde', 'Amarillo', 'Naranja', 'Verde Olivo', 'Otro'];
   const distritos = ['Potosí', 'Uyuni', 'Tupiza', 'Villazón', 'Llallagua', 'Uncía', 'Cotagaita', 'Otro'];
   const estadosFisicos = ['Bueno', 'Regular', 'Deteriorado', 'Fuera de Uso'];
+
+  // Determinar si el select de unidad debe estar bloqueado
+  // - Se bloquea si el usuario NO es admin (solo puede usar su propia unidad)
+  const unidadBloqueada = !esAdmin && tieneUnidad;
+
+  // Obtener el nombre de la unidad del usuario para mostrar en el chip
+  const nombreUnidadUsuario = currentUser?.unidad?.nombre || 'Sin unidad';
 
   return (
     <Paper
@@ -156,6 +168,21 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
       <Typography variant="h6" sx={{ mb: '1.5rem', fontWeight: 'bold', color: 'primary.main' }}>
         {vehiculo ? 'Editar Ficha Técnica del Vehículo' : 'Registrar Nuevo Vehículo'}
       </Typography>
+
+      {/* Alert informativo para no-Admins */}
+      {!esAdmin && tieneUnidad && (
+        <Alert
+          severity="info"
+          icon={<LockIcon />}
+          sx={{ mb: '1.5rem', borderRadius: '0.5rem' }}
+        >
+          <Typography variant="body2">
+            Como usuario asignado a <strong>{nombreUnidadUsuario}</strong>, el vehículo se registrará
+            automáticamente en su unidad. Contacte al Administrador si necesita registrar
+            vehículos en otra unidad.
+          </Typography>
+        </Alert>
+      )}
 
       <Alert severity="info" sx={{ mb: '1.5rem', borderRadius: '0.5rem' }}>
         Los campos marcados con (*) son obligatorios para el registro legal del parque automotor.
@@ -187,7 +214,7 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
             <TextField fullWidth label="Nº Motor *" name="numero_motor" value={formData.numero_motor} onChange={handleChange} required size="small" />
           </Grid>
 
-          {/* CAMPO: CLASIFICACIÓN - CON VALIDACIÓN DE CARGA */}
+          {/* CAMPO: CLASIFICACIÓN */}
           <Grid size={{ xs: 12, md: 3 }}>
             <FormControl fullWidth size="small" required>
               <InputLabel>Clasificación</InputLabel>
@@ -295,23 +322,50 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
             />
           </Grid>
 
-          {/* CAMPO: UNIDAD INSTITUCIONAL - CON VALIDACIÓN DE CARGA */}
+          {/* CAMPO UNIDAD INSTITUCIONAL CON LÓGICA DE BLOQUEO */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Unidad Institucional</InputLabel>
+            <FormControl fullWidth size="small" required={!esAdmin}>
+              <InputLabel>Unidad Institucional *</InputLabel>
               <Select 
                 name="unidad_id" 
                 value={cargandoUnidades ? '' : (formData.unidad_id || '')} 
                 onChange={handleChange} 
-                label="Unidad Institucional" 
-                disabled={cargandoUnidades}
+                label="Unidad Institucional *" 
+                disabled={cargandoUnidades || unidadBloqueada}
+                renderValue={(selected) => {
+                  //Personalizar el renderizado del valor seleccionado
+                  if (!selected) return <em>Sin asignar</em>;
+                  const unidad = unidades.find(u => u.id === selected);
+                  if (!unidad) return <em>Cargando...</em>;
+                  return (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <span>{unidad.sigla ? `${unidad.sigla} - ${unidad.nombre}` : unidad.nombre}</span>
+                      {unidadBloqueada && <LockIcon fontSize="small" color="action" />}
+                    </Box>
+                  );
+                }}
               >
                 <MenuItem value=""><em>Sin asignar</em></MenuItem>
-                {unidades.map(u => <MenuItem key={u.id} value={u.id}>{u.nombre}</MenuItem>)}
+                {unidades.map(u => (
+                  <MenuItem key={u.id} value={u.id}>
+                    {u.sigla ? `${u.sigla} - ${u.nombre}` : u.nombre}
+                  </MenuItem>
+                ))}
               </Select>
               {cargandoUnidades && (
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
                   Cargando unidades...
+                </Typography>
+              )}
+              {unidadBloqueada && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <LockIcon sx={{ fontSize: '0.875rem' }} />
+                  Bloqueado a su unidad asignada
+                </Typography>
+              )}
+              {!unidadBloqueada && !cargandoUnidades && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                  {esAdmin ? 'Seleccione la unidad propietaria del vehículo' : 'Sin unidad asignada'}
                 </Typography>
               )}
             </FormControl>
@@ -380,7 +434,6 @@ const VehiculoForm = ({ vehiculo, onSubmit, onCancel, loading }) => {
             variant="contained"
             color="primary"
             startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
-            //  Deshabilitar mientras cargan clasificaciones o unidades
             disabled={loading || cargandoClasificaciones || cargandoUnidades}
             sx={{ borderRadius: '0.5rem' }}
           >

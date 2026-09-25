@@ -5,12 +5,16 @@ import {
   Typography,
   Button,
   useTheme,
-  IconButton
+  IconButton,
+  Chip,
+  Box,
+  Tooltip,
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
+import ApartmentIcon from '@mui/icons-material/Apartment';
 import useAuth from '../auth/UseAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useThemeContext } from '../theme/ThemeContextRef';
@@ -21,6 +25,7 @@ const titulosRutas = {
   '/usuarios': 'Gestión de Usuarios',
   '/roles': 'Seguridad y Roles',
   '/bitacora': 'Bitácora de Sistema',
+  '/unidades': 'Gestión de Unidades',
   '/vehiculos': 'Control de Vehículos',
   '/conductores': 'Registro de Conductores',
   '/asignaciones': 'Asignación vehicular',
@@ -31,37 +36,32 @@ const titulosRutas = {
 
 export default function Navbar({ drawerWidth, handleDrawerToggle }) {
   const theme = useTheme();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation(); // 3. Hook para escuchar el cambio de URL activa
+  const location = useLocation();
   const { toggleColorMode } = useThemeContext();
 
-  // MANEJADOR DE CIERRE DE SESIÓN
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  // 4. Determinar el título de la página actual dinámicamente
+  // Determinar el título de la página actual dinámicamente
   const tituloActual = titulosRutas[location.pathname] || 'SISGEV-P';
+
+  // Determinar si mostrar el chip de unidad
+  const mostrarChipUnidad = !!user?.unidad;
 
   return (
     <AppBar
       position="fixed"
       sx={{
-        // DIMENSIONES RESPONSIVAS
         width: { sm: `calc(100% - ${drawerWidth}px)` },
         marginLeft: { sm: `${drawerWidth}px` },
-        
-        // COLORES DEL TEMA
         backgroundColor: theme.palette.background.paper,
         color: theme.palette.text.primary,
-        
-        // ELEVACIÓN Y POSICIONAMIENTO
         zIndex: theme.zIndex.drawer + 1,
         height: '4rem',
-        
-        // SOMBRA Y BORDES
         boxShadow: '0 0.125rem 0.25rem rgba(0,0,0,0.1)',
         borderBottom: `0.0625rem solid ${theme.palette.divider}`,
       }}
@@ -75,16 +75,57 @@ export default function Navbar({ drawerWidth, handleDrawerToggle }) {
           onClick={handleDrawerToggle}
           sx={{
             marginRight: '1rem',
-            display: { sm: 'none' } // OCULTO EN ESCRITORIO
+            display: { sm: 'none' }
           }}
         >
           <MenuIcon />
         </IconButton>
 
-        {/* 5. TÍTULO DE LA PÁGINA ACTUAL TOTALMENTE DINÁMICO */}
-        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
-          {tituloActual}
-        </Typography>
+        {/* TÍTULO + CHIP DE UNIDAD */}
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1.5,
+            flexGrow: 1,
+            minWidth: 0,
+          }}
+        >
+          <Typography 
+            variant="h6" 
+            noWrap 
+            component="div" 
+            sx={{ fontWeight: 600 }}
+          >
+            {tituloActual}
+          </Typography>
+
+          {/*  Chip con el nombre de la unidad activa */}
+          {mostrarChipUnidad && (
+            <Tooltip 
+              title={`Unidad activa: ${user.unidad.nombre}`}
+              arrow
+            >
+              <Chip
+                icon={<ApartmentIcon />}
+                label={user.unidad.sigla || user.unidad.nombre}
+                size="small"
+                color="primary"
+                variant="outlined"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '0.75rem',
+                  display: { xs: 'none', sm: 'flex' },
+                  maxWidth: '200px',
+                  '& .MuiChip-label': {
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  },
+                }}
+              />
+            </Tooltip>
+          )}
+        </Box>
 
         {/* BOTÓN PARA CAMBIAR MODO CLARO/OSCURO */}
         <IconButton
@@ -105,8 +146,6 @@ export default function Navbar({ drawerWidth, handleDrawerToggle }) {
             fontWeight: 600,
             color: theme.palette.primary.main,
             marginLeft: '0.5rem',
-            
-            // EFECTO HOVER SUAVE
             '&:hover': {
               backgroundColor: 'rgba(255, 255, 255, 0.08)',
             }

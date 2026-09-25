@@ -22,10 +22,12 @@ export const AuthProvider = ({ children }) => {
       // OBTENER DATOS DEL USUARIO
       const userData = res.data.data || res.data;
       
-      // GUARDAR USUARIO CON PERMISOS A NIVEL RAIZ
+      // GUARDAR USUARIO CON PERMISOS Y UNIDAD A NIVEL RAIZ
       setUser({
         ...userData,
-        permisos: userData.rol?.permisos || []
+        permisos: userData.rol?.permisos || [],
+        unidad: userData.unidad || null,
+        unidad_id: userData.unidad_id || null,
       });
       
     } catch (err) {
@@ -53,22 +55,42 @@ export const AuthProvider = ({ children }) => {
       const userData = res.data.usuario;
       setUser({
         ...userData,
-        permisos: userData.rol?.permisos || []
+        permisos: userData.rol?.permisos || [],
+        unidad: userData.unidad || null,
+        unidad_id: userData.unidad_id || null,
       });
     }
     
     return res;
   };
 
-  // Función para cerrar sesión
   const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
     setUser(null);
   };
 
+  const esAdministrador = useCallback(() => {
+    return user?.rol?.nombre === 'Administrador';
+  }, [user]);
+
+  const tieneUnidad = useCallback(() => {
+    return !!user?.unidad_id;
+  }, [user]);
+
   return (
-    <AuthContext.Provider value={{ token, user, loading, login, logout, cargarUsuario }}>
+    <AuthContext.Provider 
+      value={{ 
+        token, 
+        user, 
+        loading, 
+        login, 
+        logout, 
+        cargarUsuario,
+        esAdministrador,
+        tieneUnidad,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
