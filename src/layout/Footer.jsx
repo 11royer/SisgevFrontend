@@ -1,11 +1,6 @@
 import React from 'react';
 import {
-    Box,
-    Typography,
-    Container,
-    Divider,
-    useTheme,
-    Stack,
+    Box, Typography, Container, useTheme, Stack, Link,
 } from '@mui/material';
 
 const Footer = () => {
@@ -30,9 +25,9 @@ const Footer = () => {
                     direction={{ xs: 'column', sm: 'row' }}
                     justifyContent="space-between"
                     alignItems="center"
-                    spacing={1}
+                    spacing={{ xs: 0.5, sm: 2 }}
                 >
-                    {/* Información izquierda */}
+                    {/* Izquierda */}
                     <Typography
                         variant="caption"
                         sx={{
@@ -44,7 +39,7 @@ const Footer = () => {
                         SISGEV-P v1.0
                     </Typography>
 
-                    {/* Información central */}
+                    {/* Centro */}
                     <Typography
                         variant="caption"
                         sx={{
@@ -53,18 +48,30 @@ const Footer = () => {
                             textAlign: 'center',
                         }}
                     >
-                        © {currentYear} Comando departamental de Potosi - Sistema de Gestión de Flota Vehicular Policial
+                        © {currentYear} Comando departamental de Potosí - Sistema de Gestión de Flota Vehicular Policial
                     </Typography>
 
-                    {/* Información derecha */}
+                    {/* Derecha: correo como sello de autoría */}
                     <Typography
                         variant="caption"
                         sx={{
-                            color: theme.palette.text.secondary,
+                            color: theme.palette.text.disabled,
                             fontSize: '0.6rem',
+                            fontStyle: 'italic',
+                            whiteSpace: 'nowrap',
                         }}
                     >
-                        Todos los derechos reservados
+                        <Link
+                            href="mailto:tu-correo@ejemplo.com"
+                            underline="hover"
+                            sx={{
+                                color: 'inherit',
+                                fontSize: 'inherit',
+                                '&:hover': { color: theme.palette.primary.main },
+                            }}
+                        >
+                            royermartinezperez@gmail.com
+                        </Link>
                     </Typography>
                 </Stack>
             </Container>

@@ -1,9 +1,5 @@
 import api from '../api/axios';
 
-/**
- * Servicio para gestionar conductores
- * Endpoints: GET, POST, PUT, DELETE /api/conductores
- */
 export const conductorService = {
     /**
      * Obtener lista paginada de conductores

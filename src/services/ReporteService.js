@@ -42,10 +42,6 @@ export const reporteService = {
     
     /**
      * Exportar un formulario oficial (FORM. 01 al 11)
-     * 
-     * @param {string} tipo - Código del formulario (01, 02, 03, 05, 07, 08, 09, 11)
-     * @param {number} vehiculoId - ID del vehículo
-     * @returns {Promise<void>}
      */
     exportarFormulario: async (tipo, vehiculoId) => {
         try {
@@ -77,8 +73,6 @@ export const reporteService = {
     
     /**
      * Exportar Kárdex (FORM. 12) con fotos
-     * @param {number} vehiculoId - ID del vehículo
-     * @returns {Promise<void>}
      */
     exportarKardex: async (vehiculoId) => {
         try {
@@ -110,10 +104,6 @@ export const reporteService = {
     
     /**
      * Subir foto al Kárdex del vehículo
-     * @param {number} vehiculoId - ID del vehículo
-     * @param {File} foto - Archivo de imagen
-     * @param {string} descripcion - Descripción opcional
-     * @returns {Promise<Object>}
      */
     subirFotoKardex: async (vehiculoId, foto, descripcion = '') => {
         try {
@@ -142,8 +132,6 @@ export const reporteService = {
     
     /**
      * Eliminar foto del Kárdex
-     * @param {number} documentoId - ID del documento
-     * @returns {Promise<void>}
      */
     eliminarFotoKardex: async (documentoId) => {
         try {
